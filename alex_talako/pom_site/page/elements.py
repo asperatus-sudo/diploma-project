@@ -203,13 +203,13 @@ class WebElement(object):
 
         # Прокрутите страницу до элемента:
         # Вариант №1 для перехода к элементу:
-        # self._web_driver.execute_script("arguments[0].scrollIntoView();", element)
+        self._web_driver.execute_script("arguments[0].scrollIntoView();", element)
 
         # Вариант №2 для перехода к элементу:
-        try:
-            element.send_keys(Keys.DOWN)
-        except Exception as e:
-            pass  # Просто проигнорим ошибку, если мы не можем отправить ключи элементу
+        # try:
+        #     element.send_keys(Keys.DOWN)
+        # except Exception as e:
+        #     pass  # Просто проигнорим ошибку, если мы не можем отправить ключи элементу
 
     def delete(self):
         """ Удалить элемент. """

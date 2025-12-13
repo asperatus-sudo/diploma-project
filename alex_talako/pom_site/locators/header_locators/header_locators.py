@@ -8,7 +8,7 @@ from alex_talako.pom_site.page.elements import ManyWebElements
 class MainPage(WebPage):
     def __init__(self, web_driver, url=''):
         if not url:
-            url = os.getenv('MAIN_PAGE') or 'https://tryhackme.com/'
+            url = os.getenv('BASE_URL') or 'https://tryhackme.com/'
 
 
         super().__init__(web_driver, url)

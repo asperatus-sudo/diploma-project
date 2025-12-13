@@ -210,3 +210,15 @@ class WebPage(object):
 
         # Поднимать вверх (скролл):
         self._web_driver.execute_script('window.scrollTo(document.body.scrollHeight, 0);')
+
+    def scroll_by_pixels(self, y_offset):
+        """
+        Универсальный скролл страницы на заданное количество пикселей по вертикали.
+        Использует JS для поиска первого прокручиваемого контейнера.
+        """
+        script = f"""
+            Array.from(document.querySelectorAll('*')).find(el => 
+                ['auto','scroll'].includes(getComputedStyle(el).overflowY)
+            )?.scrollBy(0,{y_offset});
+        """
+        self._web_driver.execute_script(script)

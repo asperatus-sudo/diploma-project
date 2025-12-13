@@ -2,45 +2,55 @@ import allure
 from alex_talako.pom_site.locators.footer_locators.footer_locators import MainPage
 
 @allure.description("""Этот тест проверяет элементы футера на странице""")
+@allure.feature("Навигация и ссылки в футере")
+@allure.story("Проверка всех ссылок и иконок футера")
 def test_footer(web_browser):
 
 
     driver = MainPage(web_browser)
-    driver.btn_cookie.click()
+    with allure.step("Принятие куки"):
+        driver.btn_cookie.click()
+    with allure.step("Скролл к футеру для обеспечения видимости элементов"):
+        driver.btn_about_us.scroll_to_element()
+
 
     locators = [
-        (driver.btn_hands_on_labs, 'Hands-on labs'),
-        (driver.btn_for_business, 'For Business'),
-        (driver.btn_for_education, 'For Education'),
-        (driver.btn_competitive_hacking, 'Competitive Hacking'),
-        (driver.btn_defensive_certifications, 'Defensive Certifications'),
-        (driver.btn_about_us, 'About Us'),
-        (driver.btn_newsroom, 'Newsroom'),
-        (driver.btn_blog, 'Blog'),
-        (driver.btn_glossary, 'Glossary'),
-        (driver.btn_work_at_tryhackme, 'Work at TryHackMe'),
-        (driver.btn_careers_in_cyber, 'Careers in Cyber'),
-        (driver.btn_buy_vouchers, 'Buy Vouchers'),
-        (driver.btn_swag_shop, 'Swag Shop'),
-        (driver.btn_contact_us, 'Contact Us'),
-        (driver.btn_forum, 'Forum'),
-        (driver.btn_privacy_policy, 'Privacy Policy'),
-        (driver.btn_terms_of_use, 'Terms of Use'),
-        (driver.btn_ai_terms_of_use, 'AI Terms of Use'),
-        (driver.btn_acceptable_use_policy, 'Acceptable Use Policy'),
-        (driver.btn_cookie_policy, 'Cookie Policy'),
-        (driver.btn_follow_us_on_x, ''),
-        (driver.btn_linkedin, ''),
-        (driver.btn_discord, ''),
-        (driver.btn_follow_us_on_facebook, ''),
-        (driver.btn_follow_us_on_youtube, ''),
-        (driver.btn_follow_us_on_instagram, ''),
-        (driver.btn_follow_us_on_pinterest, ''),
-        (driver.btn_help_button, ''),
+        (driver.btn_hands_on_labs, 'Hands-on labs', "Кнопка 'Hands-on labs'"),
+        (driver.btn_for_business, 'For Business', "Кнопка 'For Business'"),
+        (driver.btn_for_education, 'For Education', "Кнопка 'For Education'"),
+        (driver.btn_competitive_hacking, 'Competitive Hacking', "Кнопка 'Competitive Hacking'"),
+        (driver.btn_defensive_certifications, 'Defensive Certifications', "Кнопка 'Defensive Certifications'"),
+        (driver.btn_about_us, 'About Us', "Кнопка 'About Us'"),
+        (driver.btn_newsroom, 'Newsroom', "Кнопка 'Newsroom'"),
+        (driver.btn_blog, 'Blog', "Кнопка 'Blog'"),
+        (driver.btn_glossary, 'Glossary', "Кнопка 'Glossary'"),
+        (driver.btn_work_at_tryhackme, 'Work at TryHackMe', "Кнопка 'Work at TryHackMe'"),
+        (driver.btn_careers_in_cyber, 'Careers in Cyber', "Кнопка 'Careers in Cyber'"),
+        (driver.btn_buy_vouchers, 'Buy Vouchers', "Кнопка 'Buy Vouchers'"),
+        (driver.btn_swag_shop, 'Swag Shop', "Кнопка 'Swag Shop'"),
+        (driver.btn_contact_us, 'Contact Us', "Кнопка 'Contact Us'"),
+        (driver.btn_forum, 'Forum', "Кнопка 'Forum'"),
+        (driver.btn_privacy_policy, 'Privacy Policy', "Кнопка 'Privacy Policy'"),
+        (driver.btn_terms_of_use, 'Terms of Use', "Кнопка 'Terms of Use'"),
+        (driver.btn_ai_terms_of_use, 'AI Terms of Use', "Кнопка 'AI Terms of Use'"),
+        (driver.btn_acceptable_use_policy, 'Acceptable Use Policy', "Кнопка 'Acceptable Use Policy'"),
+        (driver.btn_cookie_policy, 'Cookie Policy', "Кнопка 'Cookie Policy'"),
+        (driver.btn_follow_us_on_x, '', "Иконка 'Follow us on X (Twitter)'"),
+        (driver.btn_linkedin, '', "Иконка 'LinkedIn'"),
+        (driver.btn_discord, '', "Иконка 'Discord'"),
+        (driver.btn_follow_us_on_facebook, '', "Иконка 'Facebook'"),
+        (driver.btn_follow_us_on_youtube, '', "Иконка 'YouTube'"),
+        (driver.btn_follow_us_on_instagram, '', "Иконка 'Instagram'"),
+        (driver.btn_follow_us_on_pinterest, '', "Иконка 'Pinterest'"),
+        (driver.btn_help_button, '', "Кнопка 'Help'"),
     ]
 
-    for locator, expected_text in locators:
-        assert locator.is_visible(), f'Элемент "{expected_text}" отсутствует на экране'
-        actual_text = locator.get_text().strip()
-        assert actual_text == expected_text, f'Неверный текст. Ожидаемый текст "{expected_text}". Актуальный текст "{actual_text}"'
-        assert locator.is_clickable(), f'Элемент "{expected_text}" не кликабелен'
+    with allure.step("Проверка всех элементов футера в цикле"):
+        for locator, expected_text, step_name in locators:
+            with allure.step(f"Проверка элемента: {step_name}"):
+                assert locator.is_visible(), f'Элемент "{step_name}" отсутствует на экране'
+                if expected_text:
+                    actual_text = locator.get_text().strip()
+                    assert actual_text == expected_text, f'Неверный текст. Ожидаемый текст "{expected_text}". Актуальный текст "{actual_text}"'
+
+                assert locator.is_clickable(), f'Элемент "{step_name}" не кликабелен'

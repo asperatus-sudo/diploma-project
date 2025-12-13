@@ -147,3 +147,23 @@ def pytest_collection_finish(session):
                 print(full_name)
 
         pytest.exit('Done!')
+
+@pytest.fixture(scope="session")
+def base_url():
+    """Возвращает базовый URL сайта из .env"""
+    return os.getenv('BASE_URL')
+
+@pytest.fixture(scope="session")
+def bot_token():
+    """Возвращает токен Telegram-бота из .env"""
+    return os.getenv('BOT_TOKEN', None)
+
+@pytest.fixture(scope="session")
+def valid_login():
+    """Возвращает email тестового пользователя из .env"""
+    return os.getenv('VALID_LOGIN')
+
+@pytest.fixture(scope="session")
+def valid_password():
+    """Возвращает пароль тестового пользователя из .env"""
+    return os.getenv('VALID_PASSWORD')

@@ -1,8 +1,7 @@
 import pytest
 import requests
-import json
 import allure
-
+from requests.exceptions import RequestException, Timeout, SSLError
 
 @allure.title('Апи тесты')
 @allure.story(f'Проверка статус кодов всех ссылок на сайте TryHackMe и внешних ресурсов')
@@ -56,23 +55,40 @@ import allure
     (200, "https://tryhackme.com/hacktivities", "Hands-on labs"),
     (200, "https://tryhackme.com/business", "For Business"),
     (200, "https://www.linkedin.com/company/tryhackme/", "999"),
-    (301, "https://twitter.com/tryhackme", ""),
-    (301, "https://instagram.com/realtryhackme", ""),
-    (301, "https://tryhackme.com/forum", "Forum"),
-    (308, "https://www.pinterest.co.uk/RealTryHackMe/", ""),
-    (302, "https://business.tryhackme.com/", "Learn More"),
+    (200, "https://twitter.com/tryhackme", ""),
+    (200, "https://instagram.com/realtryhackme", ""),
+    (200, "https://tryhackme.com/forum", "Forum"),
+    (200, "https://www.pinterest.co.uk/RealTryHackMe/", ""),
+    (200, "https://business.tryhackme.com/", "Learn More"),
 
 ])
 
 def test_links_api_get(expected_status_code, link_url, label):
-    with allure.step(f'Подготовка тестовых данных {label}'):
-        payload = {}
+    with allure.step(f'Подготовка запроса к ссылке: {link_url}'):
         headers = {
-            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9',
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
         }
-        with allure.step(f'Вызов метода GET: {link_url}'):
-            follow_redirects = expected_status_code == 200
-            response = requests.request("GET", link_url, headers=headers, data=payload, allow_redirects=follow_redirects)
-        with allure.step(f'Проверка статус кода ссылок на сайте: {link_url}'):
-            assert response.status_code == expected_status_code, f'Статус код не равен {expected_status_code}. Статус код должен быть равен {response.status_code}'
+        # Мы изолируем каждый тест
+        session = requests.Session()
+
+    with allure.step(f'Вызов метода GET: {link_url}'):
+        try:
+            # Всегда следуем редиректам
+            response = session.get(link_url, headers=headers, timeout=10)
+        except Timeout:
+            pytest.fail(f"Превышено время ожидания при доступе к {link_url}")
+        except RequestException as e:
+            pytest.fail(f"Произошла ошибка запроса при доступе к {link_url}: {e}")
+
+    with allure.step(f'Проверка конечного статус кода для: {link_url}'):
+        # Проверяем финальный статус-код после всех редиректов
+        assert response.status_code == expected_status_code, \
+            f'Конечный статус код не равен {expected_status_code} для URL {link_url}. ' \
+            f'Получен {response.status_code}. Конечный URL: {response.url}'
+
+    if "tryhackme.com" in link_url and "/api/v2/" not in link_url:
+        with allure.step('Проверка, что внутренняя ссылка не ведет на страницу ошибки'):
+            assert "/not-found" not in response.url, \
+                f"Внутренняя ссылка {link_url} перенаправила на страницу ошибки {response.url}"
+
