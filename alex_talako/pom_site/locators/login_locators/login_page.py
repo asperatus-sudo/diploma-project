@@ -2,7 +2,7 @@ import os
 
 from alex_talako.pom_site.page.base_page import WebPage
 from alex_talako.pom_site.page.elements import WebElement
-from alex_talako.pom_site.page.elements import ManyWebElements
+
 
 class LoginPage(WebPage):
     def __init__(self, web_driver, url=''):
@@ -20,3 +20,6 @@ class LoginPage(WebPage):
     btn_log_in_account = WebElement(xpath='//button[text()="Log in"]')
     btn_send_magic_link = WebElement(xpath='//*[@data-sentry-element="StyledRegisterLink" and @href="/login/magic"]')
     btn_sign_up = WebElement(xpath='//*[@data-sentry-element="StyledRegisterLink" and @href="/signup"]')
+    btn_close_proposition = WebElement(xpath='//button[@type="button" and @aria-label="Close Modal"]')
+    btn_profile = WebElement(xpath='//button[@aria-label="Toggle avatar dropdown"]')
+    btn_view_profile = WebElement(xpath='(//*[@type="avatar"])[1]')

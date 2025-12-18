@@ -2,7 +2,7 @@ import os
 
 from alex_talako.pom_site.page.base_page import WebPage
 from alex_talako.pom_site.page.elements import WebElement
-from alex_talako.pom_site.page.elements import ManyWebElements
+
 
 
 class MainPage(WebPage):

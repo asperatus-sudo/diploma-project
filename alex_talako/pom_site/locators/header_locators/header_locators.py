@@ -2,7 +2,7 @@ import os
 
 from alex_talako.pom_site.page.base_page import WebPage
 from alex_talako.pom_site.page.elements import WebElement
-from alex_talako.pom_site.page.elements import ManyWebElements
+
 
 
 class MainPage(WebPage):
@@ -20,6 +20,6 @@ class MainPage(WebPage):
     btn_header_education = WebElement(xpath = '//*[@aria-label="Navigate to Education page"]')
     btn_header_business = WebElement(xpath = '//*[@aria-label="Navigate to Business page"]')
     btn_header_pricing = WebElement(xpath = '//*[@aria-label="Navigate to Pricing page"]')
-    btn_header_search = WebElement(xpath = '//*[@data-testid="search-btn"]')
+    btn_header_search = WebElement(xpath = '//button[@data-testid="search-btn"]')
     btn_header_log_in = WebElement(xpath = '(//*[@data-link="outlined"])[2]')
     btn_header_join_for_free = WebElement(xpath = '//*[@data-link="join"]')

@@ -123,10 +123,10 @@ async def locust_test(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     result = await execute_command(command, update, timeout=120)
 
-    # --- ВОТ ЭТА ЧАСТЬ КОДА ---
+
     await update.message.reply_text(
         f"📊 Результаты нагрузочного теста (Locust):\n```\n{result[:3000]}\n```",
-        parse_mode='Markdown' # Убедитесь, что здесь просто строка 'Markdown' в кавычках
+        parse_mode='Markdown'
     )
 
 

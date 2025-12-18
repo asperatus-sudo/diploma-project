@@ -3,7 +3,7 @@ from alex_talako.pom_site.locators.header_locators.header_locators import MainPa
 
 
 @allure.description("""Этот тест проверяет элементы хэдера на странице""")
-@allure.feature("Основное содержимое страницы") # Перевод метаданных Allure
+@allure.feature("Основное содержимое страницы")
 @allure.story("Видимость, текст и кликабельность элементов навигации")
 def test_header(web_browser):
 
