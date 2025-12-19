@@ -162,6 +162,7 @@ class WebElement(object):
             action = ActionChains(self._web_driver)
             action.move_to_element_with_offset(element, x_offset, y_offset). \
                 pause(hold_seconds).click(on_element=element).perform()
+            time.sleep(0.5)
         else:
             msg = 'Element with locator {0} not found'
             raise AttributeError(msg.format(self._locator))

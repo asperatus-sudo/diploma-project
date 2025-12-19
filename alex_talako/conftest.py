@@ -2,6 +2,7 @@ import uuid
 import allure
 import pytest
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -46,11 +47,16 @@ def web_browser(request, chrome_options):
 
     if failed:
         try:
+
             # Делаем фон белым для лучшего скриншота
             browser.execute_script("document.body.style.background = 'white';")
 
             # Создаем скриншот
-            screenshot_path = f'screenshots/{str(uuid.uuid4())}.png'
+            root_dir = Path(__file__).parent.parent
+            screenshot_dir = root_dir / "screenshots"
+            screenshot_dir.mkdir(exist_ok=True)
+
+            screenshot_path = str(screenshot_dir / f"{uuid.uuid4()}.png")
             browser.save_screenshot(screenshot_path)
 
             # Прикрепляем скриншот к Allure
@@ -79,17 +85,6 @@ def web_browser(request, chrome_options):
 
     # Всегда закрываем браузер
     browser.quit()
-
-
-@pytest.hookimpl(hookwrapper=True, tryfirst=True)
-def pytest_runtest_makereport(item):
-    # Эта функция помогает определить, что какой-то тест не прошел
-    # и передать эту информацию в отчет:
-
-    outcome = yield
-    rep = outcome.get_result()
-    setattr(item, "rep_" + rep.when, rep)
-    return rep
 
 
 def pytest_addoption(parser):

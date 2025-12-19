@@ -1,11 +1,15 @@
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
-import os
+from pathlib import Path
+from dotenv import load_dotenv
 import zipfile
 import time
 import asyncio
-from pathlib import Path
+import os
+import re
 
+
+load_dotenv()
 
 async def execute_command(cmd: str, update: Update, timeout: int = 300) -> str:
     """Выполняет shell-команду с таймаутом и возвращает результат"""
@@ -83,6 +87,16 @@ async def ui(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Запуск тестов и сохранение результатов"""
     await update.message.reply_text("🔍 Запускаю тесты...")
 
+    # Находим папку alex_talako, где лежит бот
+    base_path = Path(__file__).parent
+    # Склеиваем путь к папке с UI тестами
+    test_path = base_path / "pom_site" / "test" / "ui"
+
+    # Команда теперь использует АБСОЛЮТНЫЙ путь
+    command = f"pytest -s -v {test_path} --alluredir=./allure-results"
+
+    # Визуальный контроль в консоли PyCharm
+    print(f"DEBUG: Запускаю тесты из папки: {test_path}")
     # Подготовка директории для результатов
     results_dir = Path("./allure-results")
     results_dir.mkdir(exist_ok=True)
@@ -101,6 +115,7 @@ async def ui(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # if not any(results_dir.iterdir()):
     #     await update.message.reply_text("⚠️ Внимание: allure-results пуст. Возможно, тесты не запустились.")
     #     return
+    await send_error_screenshots(update, context)
 
     # Отправка сокращенного отчета
     short_result = "\n".join([line for line in result.split("\n") if "FAILED" in line or "ERROR" in line])
@@ -109,25 +124,116 @@ async def ui(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+def parse_locust_output(output):
+    metrics = {
+        'RPS (Requests/Sec)': 'N/A',
+        'Failures': 'N/A',
+        'Average Response Time': 'N/A',
+        'Total Requests': 'N/A'
+    }
+
+    # Ищем строку с итогами (Aggregated)
+    for line in output.split('\n'):
+        if "Aggregated" in line and "|" in line:
+            # Разбиваем строку по вертикальной черте
+            parts = [p.strip() for p in line.split('|')]
+            # Стандартная таблица Locust:
+            # Name | # reqs | # fails | Avg | Min | Max | Median | req/s
+            if len(parts) >= 8:
+                metrics['Total Requests'] = parts[1]
+                metrics['Failures'] = parts[2]
+                metrics['Average Response Time'] = f"{parts[3]}ms"
+                metrics['RPS (Requests/Sec)'] = parts[7]
+    return metrics
+
+
 async def locust_test(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Запуск нагрузочного тестирования с Locust"""
-    await update.message.reply_text("💥 Запускаю нагрузочное тестирование (Locust) на localhost:8000...")
+    """Запуск нагрузки с отображением параметров и детальным отчетом"""
 
-    locust_file_path = "pom_site/test/api/locustfile.py"
-    target_url = "http://localhost:8000"
-
-    command = (
-        f"locust --headless -f {locust_file_path} -u 10 -r 5 -t 1m "
-        f"--host {target_url}"
-    )
-
-    result = await execute_command(command, update, timeout=120)
-
+    # 1. Параметры теста
+    users, spawn_rate, run_time = 10, 1, "1m"
 
     await update.message.reply_text(
-        f"📊 Результаты нагрузочного теста (Locust):\n```\n{result[:3000]}\n```",
+        f"🚀 **Запуск нагрузочного теста**\n"
+        f"--------------------------------\n"
+        f"👥 Количество пользователей: `{users}`\n📈 Интенсивность появления пользователей: `{spawn_rate}/сек`\n⏱️ Время выполнения теста: `{run_time}`\n"
+        f"⏳ Сбор данных начат...",
         parse_mode='Markdown'
     )
+
+    # 2. Определение путей (Учитываем вложенность alex/talako)
+    root_dir = Path(__file__).parent.parent
+    results_dir = root_dir / "locust_results"
+    results_dir.mkdir(exist_ok=True)
+
+    # Формируем полный путь к скрипту
+    locust_script = (root_dir / "alex_talako" / "pom_site" / "test" / "locust" / "load_test_main_page.py").resolve()
+
+    # Пути для отчетов
+    csv_prefix = results_dir / "run_stat"
+    html_report = results_dir / "report.html"
+
+    # Проверка на существование файла
+    if not locust_script.exists():
+        await update.message.reply_text(f"❌ Файл не найден! Проверь путь:\n`{locust_script}`", parse_mode='Markdown')
+        return
+
+    # 3. Формируем команду (Обязательно используем кавычки для путей в Windows)
+    command = (
+        f'locust -f "{locust_script}" --headless -u {users} -r {spawn_rate} '
+        f'--run-time {run_time} --csv="{csv_prefix}" --html="{html_report}" --only-summary'
+    )
+
+    # 4. Выполнение
+    result = await execute_command(command, update, timeout=150)
+
+    # Вывод в консоль PyCharm для контроля
+    print(f"DEBUG: Locust Result:\n{result}")
+
+    # 5. Парсинг CSV (твоя логика)
+    stats_file = f"{csv_prefix}_stats.csv"
+    if os.path.exists(stats_file):
+        with open(stats_file, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+            main_page = next((l for l in lines if "/" in l and "GET" in l and "Aggregated" not in l), None)
+            login_page = next((l for l in lines if "/login" in l), None)
+            total = next((l for l in lines if "Aggregated" in l), None)
+
+            def get_data(line):
+                p = line.split(',')
+                # Индексы: 2-Requests, 3-Failures, 9-RPS
+                return {"req": p[2], "fail": p[3], "rps": round(float(p[9]), 2)}
+
+            report_msg = "📊 **Результаты по страницам:**\n"
+            if main_page:
+                d = get_data(main_page)
+                report_msg += f"\n🏠 **Главная страница:** {d['req']} запр. (Ошибок: {d['fail']}, RPS: {d['rps']})"
+            if login_page:
+                d = get_data(login_page)
+                report_msg += f"\n🔑 **Страница Логин:** {d['req']} запр. (Ошибок: {d['fail']}, RPS: {d['rps']})"
+
+            if total:
+                t = get_data(total)
+                report_msg += f"\n\n📈 **ИТОГО:**\nВсего запросов: `{t['req']}`\nОшибок: `{t['fail']}`\nСредний RPS: `{t['rps']}`"
+
+            await update.message.reply_text(report_msg, parse_mode='Markdown')
+
+    # 6. Отправка HTML-файла
+    if html_report.exists():
+        with open(html_report, 'rb') as doc:
+            await update.message.reply_document(
+                document=doc,
+                filename="Locust_Full_Report.html",
+                caption="📄 Полный интерактивный отчет"
+            )
+
+    # 7. Очистка временных CSV
+    for f in results_dir.glob("run_stat_*.csv"):
+        try:
+            os.remove(f)
+        except:
+            pass
+
 
 
 async def all_tests(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -152,6 +258,8 @@ async def all_tests(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # if not any(results_dir.iterdir()):
     #     await update.message.reply_text("⚠️ Внимание: allure-results пуст. Возможно, тесты не запустились.")
     #     return
+
+    await send_error_screenshots(update, context)
 
     # Отправка сокращенного отчета
     short_result = "\n".join([line for line in result.split("\n") if "FAILED" in line or "ERROR" in line])
@@ -229,9 +337,26 @@ async def full_cycle(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await all_tests(update, context)
     await generate_allure_report(update, context)
 
+async def send_error_screenshots(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Находит и отправляет все скриншоты из папки screenshots"""
+    screenshots_dir = Path(__file__).parent.parent / "screenshots"
+    if screenshots_dir.exists():
+        # Ищем все файлы .png в папке
+        for photo_path in screenshots_dir.glob("*.png"):
+            try:
+                with open(photo_path, 'rb') as photo:
+                    await context.bot.send_photo(
+                        chat_id=update.effective_chat.id,
+                        photo=photo,
+                        caption=f"📸 Скриншот ошибки из теста: {photo_path.name}"
+                    )
+                # Удаляем файл после отправки, чтобы папка была чистой
+                photo_path.unlink()
+            except Exception as e:
+                print(f"Ошибка при отправке скриншота: {e}")
 
 def main():
-    application = Application.builder().token("8469106065:AAGOFco3cFxbanN_JI0gRL9ErSTLiEEu568").build()
+    application = Application.builder().token(os.getenv("BOT_TOKEN")).build()
 
     handlers = [
         CommandHandler("start", start),
