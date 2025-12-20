@@ -7,6 +7,7 @@ from termcolor import colored
 from selenium.webdriver import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by_type import By
 from selenium.webdriver.common.keys import Keys
 
 
@@ -39,7 +40,7 @@ class WebElement(object):
         return element
 
     def wait_to_be_clickable(self, timeout=10, check_visibility=True):
-        """ Подождfть пока элемент будет готов к клику. """
+        """ Подождать пока элемент будет готов к клику. """
 
         element = None
 
@@ -54,6 +55,16 @@ class WebElement(object):
             self.wait_until_not_visible()
 
         return element
+
+    def wait_until_visible(self, timeout=10):
+        """Ждет, пока элемент станет видимым на странице"""
+        try:
+            WebDriverWait(self._web_driver, timeout).until(
+                EC.visibility_of_element_located(self._locator)
+            )
+            return True
+        except:
+            return False
 
     def is_clickable(self):
         """ Проверка, готов ли элемент к клику или нет. """

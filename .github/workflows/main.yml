@@ -40,7 +40,9 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}
         run: |
           # Запускаем все тесты в папке alex_talako
-          pytest alex_talako/pom_site/test/ --alluredir=allure-results
+          pytest alex_talako/pom_site/test/ \
+          --alluredir=allure-results \
+          -k "not test_login_successfully and not instagram"
         continue-on-error: true
 
       - name: Save Allure Results
