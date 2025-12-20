@@ -2,8 +2,9 @@ import allure
 from alex_talako.pom_site.locators.not_found_locators.not_found_page import NotFoundPage
 
 
-@allure.feature("Обработка ошибок")
-@allure.story("Визуальная проверка страницы 404")
+@allure.epic('EPIC 2: Функциональное тестирование TryHackMe')
+@allure.feature('Feature 2.5: UI Обработка ошибок (Error Pages)')
+@allure.story('Story 2.5.1: Визуальная проверка и навигация на странице 404 Not Found')
 def test_not_found_page(web_browser):
 
 

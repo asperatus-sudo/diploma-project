@@ -3,8 +3,9 @@ import requests
 import allure
 from requests.exceptions import RequestException, Timeout, SSLError
 
-@allure.title('Апи тесты')
-@allure.story(f'Проверка статус кодов всех ссылок на сайте TryHackMe и внешних ресурсов')
+@allure.epic('EPIC 1: Функциональное тестирование TryHackMe')
+@allure.feature('Feature 1.3: Навигация и пользовательский интерфейс')
+@allure.story('Story 1.3.1: Проверка наличия всех ключевых элементов на главной странице')
 @pytest.mark.parametrize("expected_status_code, link_url, label", [
     (200, "https://store.tryhackme.com/", "Swag Shop"),
     (200, "https://discord.com/invite/tryhackme", ""),

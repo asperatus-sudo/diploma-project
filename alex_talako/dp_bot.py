@@ -6,7 +6,8 @@ import zipfile
 import time
 import asyncio
 import os
-import re
+import json
+
 
 
 load_dotenv()
@@ -57,70 +58,69 @@ async def api(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Запуск тестов и сохранение результатов"""
     await update.message.reply_text("🔍 Запускаю тесты...")
 
-    # Подготовка директории для результатов
-    results_dir = Path("./allure-results")
+    # 1. Находим корень и папку результатов в корне проекта
+    root_dir = Path(__file__).parent.parent
+    results_dir = root_dir / "allure-results"
     results_dir.mkdir(exist_ok=True)
 
-    # Очистка предыдущих результатов
+    # 2. Очистка (чтобы в отчете по /api были ТОЛЬКО свежие API-результаты)
     for file in results_dir.glob("*"):
-        file.unlink()
+        try:
+            if file.is_file():
+                file.unlink()
+        except Exception as e:
+            print(f"Ошибка удаления файла {file}: {e}")
 
-    # Запуск pytest
-    result = await execute_command(
-        "pytest -s -v pom_site/test/api/ --alluredir=./allure-results",
-        update
-    )
+    # 3. Путь к самим тестам
+    test_path = root_dir / "alex_talako" / "pom_site" / "test" / "api"
 
-    # Проверка наличия результатов тестов
-    # if not any(results_dir.iterdir()):
-    #     await update.message.reply_text("⚠️ Внимание: allure-results пуст. Возможно, тесты не запустились.")
-    #     return
+    # 4. Команда запуска (используем кавычки для Windows)
+    command = f'pytest -s -v "{test_path}" --alluredir="{results_dir}"'
 
-    # Отправка сокращенного отчета
+    # Выполняем команду
+    result = await execute_command(command, update)
+
+    # 5. Сводка
     short_result = "\n".join([line for line in result.split("\n") if "FAILED" in line or "ERROR" in line])
     await update.message.reply_text(
-        f"📊 Результаты тестов:\n{short_result[:3000]}" if short_result else "✅ Все тесты прошли успешно!"
+        f"📊 Результаты API тестов:\n{short_result[:3000]}" if short_result else "✅ API тесты прошли успешно!"
     )
 
 
 async def ui(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Запуск тестов и сохранение результатов"""
-    await update.message.reply_text("🔍 Запускаю тесты...")
+    """Запуск UI-тестов с гарантированной чистотой отчета и скриншотами"""
+    await update.message.reply_text("🔍 Запускаю UI-тесты...")
 
-    # Находим папку alex_talako, где лежит бот
-    base_path = Path(__file__).parent
-    # Склеиваем путь к папке с UI тестами
-    test_path = base_path / "pom_site" / "test" / "ui"
-
-    # Команда теперь использует АБСОЛЮТНЫЙ путь
-    command = f"pytest -s -v {test_path} --alluredir=./allure-results"
-
-    # Визуальный контроль в консоли PyCharm
-    print(f"DEBUG: Запускаю тесты из папки: {test_path}")
-    # Подготовка директории для результатов
-    results_dir = Path("./allure-results")
+    # 1. Находим корень проекта дважды двигаемся вверх
+    root_dir = Path(__file__).parent.parent
+    results_dir = root_dir / "allure-results"  # Папка в КОРНЕ проекта
     results_dir.mkdir(exist_ok=True)
 
-    # Очистка предыдущих результатов
+    # 2. Очистка (чтобы в отчете по /ui были ТОЛЬКО свежие UI-результаты)
     for file in results_dir.glob("*"):
-        file.unlink()
+        try:
+            if file.is_file():
+                file.unlink()
+        except Exception as e:
+            print(f"Ошибка удаления файла {file}: {e}")
 
-    # Запуск pytest
-    result = await execute_command(
-        "pytest -s -v pom_site/test/ui/ --alluredir=./allure-results",
-        update
-    )
+    # 3. Путь к самим тестам (теперь правильно: через alex_talako)
+    test_path = root_dir / "alex_talako" / "pom_site" / "test" / "ui"
 
-    # Проверка наличия результатов тестов
-    # if not any(results_dir.iterdir()):
-    #     await update.message.reply_text("⚠️ Внимание: allure-results пуст. Возможно, тесты не запустились.")
-    #     return
+    # 4. Команда запуска (используем кавычки для Windows)
+    # Используем --alluredir="${results_dir}" для указания пути к allure
+    command = f'pytest -s -v "{test_path}" --alluredir="{results_dir}"'
+
+    # Выполняем команду
+    result = await execute_command(command, update)
+
+    # 5. Отправляем скриншоты ошибок (если есть)
     await send_error_screenshots(update, context)
 
-    # Отправка сокращенного отчета
+    # 6. Сводка (твоя логика)
     short_result = "\n".join([line for line in result.split("\n") if "FAILED" in line or "ERROR" in line])
     await update.message.reply_text(
-        f"📊 Результаты тестов:\n{short_result[:3000]}" if short_result else "✅ Все тесты прошли успешно!"
+        f"📊 Результаты UI тестов:\n{short_result[:3000]}" if short_result else "✅ UI тесты прошли успешно!"
     )
 
 
@@ -235,102 +235,110 @@ async def locust_test(update: Update, context: ContextTypes.DEFAULT_TYPE):
             pass
 
 
-
 async def all_tests(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Запуск тестов и сохранение результатов"""
-    await update.message.reply_text("🔍 Запускаю тесты...")
+    """Запуск ВСЕХ тестов (API + UI) и сохранение результатов"""
+    await update.message.reply_text("🔍 Запускаю все тесты (API и UI)...")
 
-    # Подготовка директории для результатов
-    results_dir = Path("./allure-results")
+    # 1. Находим корень проекта и папку результатов в корне проекта
+    root_dir = Path(__file__).parent.parent
+    results_dir = root_dir / "allure-results"
     results_dir.mkdir(exist_ok=True)
 
-    # Очистка предыдущих результатов
+    # 2. ОЧИСТКА (КРИТИЧНО для полного отчета, чтобы не было старых "хвостов")
     for file in results_dir.glob("*"):
-        file.unlink()
+        try:
+            if file.is_file():
+                file.unlink()
+        except Exception as e:
+            print(f"Ошибка удаления файла {file}: {e}")
 
-    # Запуск pytest
-    result = await execute_command(
-        "pytest -s -v pom_site/test --alluredir=./allure-results",
-        update
-    )
+    # 3. Путь ко всем тестам сразу (pytest сам найдет api и ui)
+    test_suite_path = root_dir / "alex_talako" / "pom_site" / "test"
 
-    # Проверка наличия результатов тестов
-    # if not any(results_dir.iterdir()):
-    #     await update.message.reply_text("⚠️ Внимание: allure-results пуст. Возможно, тесты не запустились.")
-    #     return
+    # 4. Команда запуска (используем кавычки для Windows)
+    command = f'pytest -s -v "{test_suite_path}" --alluredir="{results_dir}"'
 
+    # Выполняем команду
+    result = await execute_command(command, update)
+
+    # 5. Отправляем скриншоты ошибок (если есть)
     await send_error_screenshots(update, context)
 
-    # Отправка сокращенного отчета
+    # 6. Сводка (твоя логика)
     short_result = "\n".join([line for line in result.split("\n") if "FAILED" in line or "ERROR" in line])
     await update.message.reply_text(
-        f"📊 Результаты тестов:\n{short_result[:3000]}" if short_result else "✅ Все тесты прошли успешно!"
+        f"📊 Результаты всех тестов:\n{short_result[:3000]}" if short_result else "✅ Все тесты прошли успешно!"
     )
-
 
 
 async def generate_allure_report(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Генерация отчета и отправка архива"""
+    """Генерация отчета, текстовая сводка для телефона и отправка архива"""
     try:
-        # Проверка наличия результатов тестов
-        results_dir = Path("./allure-results")
+        root_dir = Path(__file__).parent.parent
+        results_dir = root_dir / "allure-results"
+        report_dir = root_dir / "allure-report"
+
         if not results_dir.exists() or not any(results_dir.iterdir()):
-            await update.message.reply_text("❌ Нет данных для отчета: папка allure-results пуста или отсутствует")
+            await update.message.reply_text("❌ Нет данных для отчета: папка allure-results пуста")
             return
 
-        # Генерация отчета
         await update.message.reply_text("📈 Генерирую Allure-отчет...")
-        report_dir = Path("./allure-report")
         report_dir.mkdir(exist_ok=True)
 
-        gen_result = await execute_command(
-            "allure generate ./allure-results --clean -o ./allure-report",
-            update
-        )
+        command = f'allure generate "{results_dir}" --clean -o "{report_dir}"'
+        await execute_command(command, update)
 
-        # Проверка наличия сгенерированного отчета
-        report_index = report_dir / "index.html"
-        if not report_index.exists():
-            await update.message.reply_text("❌ Ошибка генерации: index.html не найден в allure-report")
-            return
+        # --- НОВЫЙ БЛОК: Сводка для телефона ---
+        summary_file = report_dir / "widgets" / "summary.json"
+        stats_text = ""
+        if summary_file.exists():
+            with open(summary_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                s = data['statistic']
+                total = s['total']
+                passed = s['passed']
+                failed = s['failed'] + s['broken']
+                skipped = s['skipped']
+                pass_percent = round((passed / total) * 100, 1) if total > 0 else 0
 
-        # Создание архива
+                stats_text = (
+                    f"📊 **Краткая сводка:**\n"
+                    f"✅ Пройдено: `{passed}`\n"
+                    f"❌ Упало: `{failed}`\n"
+                    f"⏩ Пропущено: `{skipped}`\n"
+                    f"🎯 Успешность: `{pass_percent}%`"
+                )
+
+        # --- Создание архива (твой код с небольшим фиксом пути) ---
         await update.message.reply_text("📦 Создаю архив...")
         timestamp = int(time.time())
         zip_name = f"allure_report_{timestamp}.zip"
+        abs_zip_path = root_dir / zip_name
 
-        with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            # Добавляем allure-report
+        with zipfile.ZipFile(abs_zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
             for root, _, files in os.walk(report_dir):
                 for file in files:
                     file_path = Path(root) / file
-                    arcname = os.path.join("allure-report", os.path.relpath(file_path, report_dir))
-                    zipf.write(file_path, arcname=arcname)
+                    arcname = os.path.relpath(file_path, report_dir)
+                    zipf.write(file_path, arcname=f"AllureReport/{arcname}")
 
-            # Добавляем allure-results
-            for root, _, files in os.walk(results_dir):
-                for file in files:
-                    file_path = Path(root) / file
-                    arcname = os.path.join("allure-results", os.path.relpath(file_path, results_dir))
-                    zipf.write(file_path, arcname=arcname)
-
-        # Отправка архива
+        # Отправка
         await update.message.reply_text("📤 Отправляю архив...")
-        with open(zip_name, 'rb') as zip_file:
+        with open(abs_zip_path, 'rb') as zip_file:
+            caption = f"{stats_text}\n\n📄 Полный отчет в архиве (для ПК)" if stats_text else "📊 Allure Report"
             await context.bot.send_document(
                 chat_id=update.effective_chat.id,
                 document=zip_file,
                 filename=zip_name,
-                caption="📊 Allure Report (включая исходные данные)"
+                caption=caption,
+                parse_mode='Markdown'
             )
 
-        # Очистка временных файлов
-        os.remove(zip_name)
-        await update.message.reply_text("✅ Отчет успешно отправлен!")
+        os.remove(abs_zip_path)
+        await update.message.reply_text("✅ Отчет готов!")
 
     except Exception as e:
-        await update.message.reply_text(f"⚠️ Критическая ошибка: {str(e)}")
-
+        await update.message.reply_text(f"⚠️ Ошибка: {str(e)}")
 
 async def full_cycle(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Полный цикл: тесты + отчет"""

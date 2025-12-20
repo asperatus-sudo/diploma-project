@@ -20,6 +20,10 @@ def pytest_runtest_makereport(item, call):
 @pytest.fixture
 def chrome_options():
     options = Options()
+    if os.getenv('GITHUB_ACTIONS'):
+        options.add_argument("--headless=new")
+        options.add_argument("--window-size=1920,1080")
+
     # options.add_argument("--headless")
     options.add_argument("--disable-gpu")
     options.add_argument('--no-sandbox')
@@ -33,7 +37,8 @@ def chrome_options():
 def web_browser(request, chrome_options):
     # Используем переданные опции
     browser = webdriver.Chrome(options=chrome_options)
-    browser.maximize_window()
+    if not os.getenv('GITHUB_ACTIONS'):
+        browser.maximize_window()
 
     # Вернуть экземпляр браузера в тестовый пример:
     yield browser

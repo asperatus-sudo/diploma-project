@@ -1,16 +1,23 @@
 import pytest
 import os
+from dotenv import load_dotenv
 import allure
 import time
 from alex_talako.pom_site.locators.login_locators.login_page import LoginPage
 
-LOGIN = os.getenv("VALID_LOGIN")
-PASSWORD = os.getenv("VALID_PASSWORD")
+load_dotenv()
+
+BASE_URL = os.getenv('BASE_URL','https://tryhackme.com')
+LOGIN = os.getenv("TEST_LOGIN")
+PASSWORD = os.getenv("TEST_PASSWORD")
+USER = os.getenv("TEST_USERNAME")
 
 if not LOGIN or not PASSWORD:
     pytest.skip("Переменные окружения VALID_LOGIN или VALID_PASSWORD не установлены")
 
-@allure.description("""Этот тест совершает успешную авторизацию пользователя""")
+@allure.epic('EPIC 2: Функциональное тестирование TryHackMe')
+@allure.feature('Feature 2.4: UI Авторизация и Личный кабинет')
+@allure.story('Story 2.4.1: Успешный вход в систему и переход в профиль пользователя')
 def test_login_successfully(web_browser):
 
     driver = LoginPage(web_browser)
@@ -52,4 +59,5 @@ def test_login_successfully(web_browser):
 
     with allure.step("Финальная валидация профиля"):
         current_url = driver.get_current_url()
-        assert "/p/Asperatus." in current_url, f"Ожидался переход в профиль, но текущий URL: {current_url}"
+        expected_part = f'{BASE_URL}/p/{USER}'
+        assert expected_part in current_url, f"Ожидался переход в профиль, но текущий URL: {current_url}"

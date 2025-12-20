@@ -1,9 +1,12 @@
 import pytest
 import requests
 import allure
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 
-BASE_URL = "https://tryhackme.com"
+BASE_URL = os.getenv('BASE_URL','https://tryhackme.com')
 
 PUBLIC_HEADERS = {
     'accept': '*/*',
@@ -11,9 +14,9 @@ PUBLIC_HEADERS = {
     'referer': 'tryhackme.com',
 }
 
-@allure.epic('Тестирование API TryHackMe')
-@allure.feature('Детали комнаты')
-@allure.story('Доступ к деталям публичной комнаты для неавторизованного пользователя')
+@allure.epic('EPIC 1: Функциональное тестирование TryHackMe')
+@allure.feature('Feature 1.6: Детализация публичной комнаты API')
+@allure.story('Story 1.6.1: Проверка данных комнаты "Pickle Rick" для неавторизованного пользователя')
 def test_get_room_details_public():
     room_code = 'picklerick'
     base_api_url = f'{BASE_URL}/api/v2/rooms/details'

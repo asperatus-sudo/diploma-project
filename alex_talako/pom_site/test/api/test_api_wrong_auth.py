@@ -3,10 +3,15 @@ import requests
 import json
 import allure
 import os
+from dotenv import load_dotenv
 
-@allure.epic('API тест')
-@allure.feature('Авторизация')
-@allure.story('Негативный тест: Неверные учетные данные')
+load_dotenv()
+
+BASE_URL = os.getenv('BASE_URL','https://tryhackme.com')
+
+@allure.epic('EPIC 1: Функциональное тестирование TryHackMe')
+@allure.feature('Feature 1.8: Тестирование авторизации API')
+@allure.story('Story 1.8.1: Негативный сценарий: вход с неверными данными')
 @pytest.mark.parametrize("url, expected_status_code", [
     ("https://tryhackme.com/api/v2/auth/login", 403),
 
@@ -15,8 +20,8 @@ def test_api_login_invalid_credentials(url, expected_status_code):
     with allure.step(f'Подготовка тестовых данных и payload'):
 
         payload = json.dumps({
-            "login": os.getenv("INVALID_LOGIN"),
-            "password": os.getenv("INVALID_PASSWORD"),
+            "login": os.getenv("INVALID_TEST_LOGIN"),
+            "password": os.getenv("INVALID_TEST_PASSWORD"),
         })
 
         headers = {

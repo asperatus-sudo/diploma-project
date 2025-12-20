@@ -1,12 +1,16 @@
 import pytest
 import requests
 import allure
-import json
+import os
+from dotenv import load_dotenv
 
-BASE_URL = "https://tryhackme.com"
-@allure.epic('API тесты')
-@allure.feature('Проверка основных публичных страниц')
-@allure.title('Проверка доступности и статус кода основных Endpoints')
+load_dotenv()
+
+BASE_URL = os.getenv('BASE_URL','https://tryhackme.com')
+
+@allure.epic('EPIC 1: Функциональное тестирование TryHackMe')
+@allure.feature('Feature 1.2: Доступность публичных страниц')
+@allure.story('Story 1.2.1: Проверка статус-кодов основных эндпоинтов')
 @pytest.mark.parametrize('endpoint_path, expected_status_code, expected_final_path', [
     ("/challenges", 200, "/challenges"),
     ("/pricing", 200, "/pricing"),

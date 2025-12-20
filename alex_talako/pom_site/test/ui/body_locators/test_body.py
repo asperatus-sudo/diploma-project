@@ -3,9 +3,9 @@ import pytest_check as check
 
 from alex_talako.pom_site.locators.body_locators.body_locators import MainPage
 
-@allure.description("""Этот тест проверяет остальные локаторы на странице, кроме хэдера и футера""")
-@allure.feature("Основное содержимое страницы")
-@allure.story("Видимость и кликабельность блоков и статических элементов")
+@allure.epic('EPIC 2: Функциональное тестирование TryHackMe')
+@allure.feature('Feature 2.1: UI Основное содержимое (Body)')
+@allure.story('Story 2.1.1: Проверка контента и блоков обучающих путей')
 def test_body(web_browser):
 
 

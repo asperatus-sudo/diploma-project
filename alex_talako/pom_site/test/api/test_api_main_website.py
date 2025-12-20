@@ -1,14 +1,18 @@
 import pytest
 import requests
 import allure
+import os
+from dotenv import load_dotenv
 from requests.exceptions import Timeout, RequestException
 
-BASE_URL = "https://tryhackme.com"
+load_dotenv()
+
+BASE_URL = os.getenv('BASE_URL','https://tryhackme.com')
 
 
-@allure.epic('Доступность сайта')
-@allure.feature('Главная страница')
-@allure.story('Проверка работы главной страницы сайта')
+@allure.epic('EPIC 1: Функциональное тестирование TryHackMe')
+@allure.feature('Feature 1.4: Доступность публичных страниц')
+@allure.story('Story 1.4.1: Проверка работы главной страницы сайта (Smoke)')
 @pytest.mark.smoke
 def test_main_website_availability():
     url = f'{BASE_URL}/'

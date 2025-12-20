@@ -1,0 +1,51 @@
+name: TryHackMe CI
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Позволяет запускать вручную на сайте GitHub
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Setup Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Run Pytest
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}
+          TEST_LOGIN: ${{ secrets.TEST_LOGIN }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+          TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
+          AUTH_COOKIE: ${{ secrets.AUTH_COOKIE }}
+          INVALID_TEST_LOGIN: ${{ secrets.INVALID_TEST_LOGIN }}
+          INVALID_TEST_PASSWORD: ${{ secrets.INVALID_TEST_PASSWORD }}
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          # Запускаем все тесты в папке alex_talako
+          pytest alex_talako/pom_site/test/ --alluredir=allure-results
+        continue-on-error: true
+
+      - name: Save Allure Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results
+          path: allure-results
+          retention-days: 1

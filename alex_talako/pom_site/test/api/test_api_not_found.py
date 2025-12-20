@@ -2,13 +2,17 @@ import pytest
 import requests
 import allure
 import urllib.parse
+import os
+from dotenv import load_dotenv
 
-BASE_URL = "https://tryhackme.com"
+load_dotenv()
+
+BASE_URL = os.getenv('BASE_URL','https://tryhackme.com')
 
 
-@allure.epic('Апи тесты')
-@allure.feature('Негативные тесты публичных страниц и API')
-@allure.story('Проверка обработки ошибок для несуществующих URL')
+@allure.epic('EPIC 1: Функциональное тестирование TryHackMe')
+@allure.feature('Feature 1.5: Обработка ошибок и негативное тестирование API')
+@allure.story('Story 1.5.1: Проверка обработки ошибок для несуществующих URL')
 @pytest.mark.parametrize('invalid_endpoint_path, expected_status_code', [
     ("/api/dest", 200),
     ("/asdasdgagqewr", 200),

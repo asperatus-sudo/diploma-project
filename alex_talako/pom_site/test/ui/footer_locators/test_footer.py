@@ -1,9 +1,9 @@
 import allure
 from alex_talako.pom_site.locators.footer_locators.footer_locators import MainPage
 
-@allure.description("""Этот тест проверяет элементы футера на странице""")
-@allure.feature("Навигация и ссылки в футере")
-@allure.story("Проверка всех ссылок и иконок футера")
+@allure.epic('EPIC 2: Функциональное тестирование TryHackMe')
+@allure.feature('Feature 2.2: UI Футер страницы (Footer)')
+@allure.story('Story 2.2.1: Проверка навигационных ссылок и социальных иконок')
 def test_footer(web_browser):
 
 

@@ -2,9 +2,9 @@ import allure
 from alex_talako.pom_site.locators.header_locators.header_locators import MainPage
 
 
-@allure.description("""Этот тест проверяет элементы хэдера на странице""")
-@allure.feature("Основное содержимое страницы")
-@allure.story("Видимость, текст и кликабельность элементов навигации")
+@allure.epic('EPIC 2: Функциональное тестирование TryHackMe')
+@allure.feature('Feature 2.3: UI Хедер страницы (Header)')
+@allure.story('Story 2.3.1: Проверка элементов навигации и кнопок входа')
 def test_header(web_browser):
 
 

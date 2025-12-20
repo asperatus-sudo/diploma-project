@@ -2,9 +2,13 @@ import pytest
 import requests
 import allure
 import time
+import os
+from dotenv import load_dotenv
 from requests.exceptions import Timeout, RequestException
 
-BASE_URL = "https://tryhackme.com"
+load_dotenv()
+
+BASE_URL = os.getenv('BASE_URL','https://tryhackme.com')
 
 SECURITY_HEADERS_TO_CHECK = [
     ('Content-Security-Policy', False), # Защита от XSS и внедрения кода
@@ -18,9 +22,9 @@ SECURITY_HEADERS_TO_CHECK = [
 ]
 
 
-@allure.epic('Тестирование безопасности')
-@allure.feature('HTTP Заголовки')
-@allure.story('Проверка наличия или отсутствия ключевых заголовков безопасности')
+@allure.epic('EPIC 1: Функциональное тестирование TryHackMe')
+@allure.feature('Feature 1.7: Тестирование безопасности HTTP')
+@allure.story('Story 1.7.1: Аудит заголовков безопасности (Security Headers)')
 @pytest.mark.parametrize('header_name, expected_presence', SECURITY_HEADERS_TO_CHECK)
 def test_security_headers_presence(header_name, expected_presence):
     url = f'{BASE_URL}/login'
@@ -37,13 +41,16 @@ def test_security_headers_presence(header_name, expected_presence):
     headers = response.headers
     is_present = header_name in headers
 
-    with allure.step(f'Проверка наличия заголовка "{header_name}" (Ожидание: {expected_presence})'):
+    with allure.step(f'Проверка заголовка "{header_name}"'):
         if expected_presence:
-            assert is_present, f'Ошибка. Ожидали наличие заголовка "{header_name}", но он отсутствует'
-            assert headers[header_name], f'Заголовок "{header_name}" существует, но имеет пустое значение.'
+            # Мы ожидаем заголовок (как Content-Type), и его нет — это ошибка
+            assert is_present, f'Ошибка: Базовый заголовок "{header_name}" отсутствует!'
+            assert headers[header_name], f'Заголовок "{header_name}" пустой.'
         else:
-            if is_present:
-                pytest.fail(
-                    f'Баг исправлен. Заголовок "{header_name}" теперь существует, но мы ожидали его отсутствия.')
+            # Мы знаем, что заголовка НЕТ, но он ДОЛЖЕН быть в хорошей ситуации
+            if not is_present:
+                allure.dynamic.description(f"Заголовок {header_name} отсутствует. Это уязвимость.")
+                pytest.xfail(f"Баг: Заголовок {header_name} отсутствует на сервере.")
             else:
-                pytest.skip(f'Имеется наличие бага. Заголовок "{header_name}" отсутствует, как и ожидалось.')
+                # Если вдруг заголовок появился (баг исправили)
+                pytest.fail(f"Заголовок {header_name} появился. Нужно обновить статус теста на True.")
