@@ -43,7 +43,7 @@ python-dotenv==1.2.1
 python-engineio==4.12.3
 python-socketio==5.15.0
 python-telegram-bot==22.5
-pywin32==311
+pywin32; platform_system == "Windows"
 pyzmq==27.1.0
 requests==2.32.4
 selenium==4.38.0
