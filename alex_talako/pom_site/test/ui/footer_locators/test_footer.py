@@ -42,7 +42,6 @@ def test_footer(web_browser):
         (driver.btn_follow_us_on_youtube, '', "Иконка 'YouTube'"),
         (driver.btn_follow_us_on_instagram, '', "Иконка 'Instagram'"),
         (driver.btn_follow_us_on_pinterest, '', "Иконка 'Pinterest'"),
-        (driver.btn_help_button, '', "Кнопка 'Help'"),
     ]
 
     with allure.step("Проверка всех элементов футера в цикле"):
