@@ -48,7 +48,7 @@ def test_footer(web_browser):
     with allure.step("Проверка всех элементов футера в цикле"):
         for locator, expected_text, step_name in locators:
             with allure.step(f"Проверка элемента: {step_name}"):
-                assert locator.is_visible(), f'Элемент "{step_name}" отсутствует на экране'
+                assert locator.wait_until_is_visible(timeout=5), f'Элемент "{step_name}" не успел прогрузиться'
                 if expected_text:
                     actual_text = locator.get_text().strip()
                     assert actual_text == expected_text, f'Неверный текст. Ожидаемый текст "{expected_text}". Актуальный текст "{actual_text}"'
