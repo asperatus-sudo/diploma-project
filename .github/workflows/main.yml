@@ -57,4 +57,4 @@ jobs:
         run: |
             curl -s -X POST https://api.telegram.org/bot${{ secrets.BOT_TOKEN }}/sendMessage \
               -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
-              -d text="🚀 Тесты на GitHub завершены!%0A✅ Пройдено: 75%0A❌ Ожидаемые ошибки: 6%0A%0AЗайди в бота и нажми /allure_report для получения архива."
+              -d text="🚀 Тесты на GitHub завершены!%0A✅ Пройдено: 75%0A❌ Ожидаемые ошибки (xfail): 6%0A⚠️ Провалено (failed): 0%0A%0AЗайди в бота и нажми /allure_report для получения архива."
