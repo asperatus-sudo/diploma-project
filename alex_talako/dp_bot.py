@@ -34,24 +34,33 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                     '1)  Напиши /about , чтобы узнать обо мне и создателе.\n\n'
                                     '2)  Напиши /api , чтобы начать api тесты, которые помогают выявить ошибки и оценить общую работоспособность системы.\n\n'
                                     '3)  Напиши /ui , чтобы начать ui тесты, которые проверяют пользовательский интерфейс ПО, оценивает его визуальные элементы, функциональность, удобство использования и т.д.\n\n'
-                                    '4)  Напиши /all_test, чтобы начать запуск всех api и ui тестов.\n\n'
-                                    '5)  Напиши /allure_report, чтобы создать allure отчёт и сделать отправку архива.\n\n'
-                                    '6)  Напиши /full_report, чтобы запустить все тесты и сгенерировать по ним отчёт.\n\n'
+                                    '4)  Напиши /locust_test, чтобы начать нагрузочное тестирование.\n\n'
+                                    '5)  Напиши /all_test, чтобы начать запуск всех api и ui тестов.\n\n'
+                                    '6)  Напиши /allure_report, чтобы создать allure отчёт и сделать отправку архива.\n\n'
+                                    '7)  Напиши /full_report, чтобы запустить все тесты и сгенерировать по ним отчёт.\n\n'
                                     )
 
 
 
 async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    about_text = ('Здравствуй, дорогой пользователь!\n\nЯ создал бота для того, чтоб реализовать авто тесты с помощью функционала бота.\n\n'
-                  'Бот умеет запускать авто тесты с упором на api и ui тесты, а также сгенерировать allure отчёт по совершённым тестам.\n\n'
-                  'Меня зовут Талако Александр Тимофеевич!\n'
-                  'Я начинающий тестировщик без опыта работы, но имеющий большое рвение и скрытый потенциал им стать.\n\n'
-                  'Владею следующим:\n'
-                  'TestRail, TestLink, Jmeter, Jira, JSON, XML, HTML, DevTools, SQL-запросы, Postman, Python, Pycharm, Git, Allure\n'
-                  'Этот список будет дополняться :)\n\n'
-                  'Также хочу отметить, что нравится мне область информационной безопасности и стать специалистом в этой области — это то, к чему я стремлюсь.\n\n'
-                  'Бота зовут — @emnotem_bot\nМой телеграм аккаунт — @asperatus99')
-    await update.message.reply_text(about_text)
+    about_text = (
+        "🤖 <b>Telegram Bot for QA Automation</b>\n\n"
+        "Программный комплекс, разработанный Александром Талако. "
+        "Он объединяет инструменты тестирования в общую систему мониторинга качества.\n\n"
+        "🛠 <b>Технологический фундамент:</b>\n"
+        "• <b>Python 3.14 & Pytest</b>: Современная база для стабильной работы.\n"
+        "• <b>API & Security</b>: Проверка бизнес-логики и аудит безопасности заголовков.\n"
+        "• <b>UI Automation</b>: Selenium с использованием паттерна <b>Page Object Model</b>, "
+        "что делает тесты читаемыми и легкими в поддержке.\n"
+        "• <b>Performance</b>: Нагрузочное тестирование системы через Locust.\n"
+        "• <b>CI/CD Integration</b>: Полная автоматизация запуска в облаке GitHub Actions.\n\n"
+        "🎯 <b>Главная цель:</b>\n"
+        "Создание надежного «регрессионного щита», который проверяет функциональность "
+        "и защищенность системы при каждом обновлении кода.\n\n"
+        "👨‍💻 <b>Автор</b>: @asperatus99 (Александр Талако)\n"
+        "Развиваю навыки на стыке QA Automation и Cybersecurity."
+    )
+    await update.message.reply_text(about_text, parse_mode='HTML')
 
 
 async def api(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -190,7 +199,7 @@ async def locust_test(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Вывод в консоль PyCharm для контроля
     print(f"DEBUG: Locust Result:\n{result}")
 
-    # 5. Парсинг CSV (твоя логика)
+    # 5. Парсинг CSV
     stats_file = f"{csv_prefix}_stats.csv"
     if os.path.exists(stats_file):
         with open(stats_file, 'r', encoding='utf-8') as f:
@@ -288,7 +297,7 @@ async def generate_allure_report(update: Update, context: ContextTypes.DEFAULT_T
         command = f'allure generate "{results_dir}" --clean -o "{report_dir}"'
         await execute_command(command, update)
 
-        # --- НОВЫЙ БЛОК: Сводка для телефона ---
+        # Сводка для телефона
         summary_file = report_dir / "widgets" / "summary.json"
         stats_text = ""
         if summary_file.exists():
@@ -297,15 +306,15 @@ async def generate_allure_report(update: Update, context: ContextTypes.DEFAULT_T
                 s = data['statistic']
                 total = s['total']
                 passed = s['passed']
-                failed = s['failed'] + s['broken']
-                skipped = s['skipped']
+                failed_real = s['failed'] + s['broken']
+                xfails = s.get('skipped', 0)
                 pass_percent = round((passed / total) * 100, 1) if total > 0 else 0
 
                 stats_text = (
                     f"📊 **Краткая сводка:**\n"
                     f"✅ Пройдено: `{passed}`\n"
-                    f"❌ Упало: `{failed}`\n"
-                    f"⏩ Пропущено: `{skipped}`\n"
+                    f"⚠️ Ожидаемые ошибки (xfail): `{xfails}`\n"
+                    f"❌ Реальные сбои (failed): `{failed_real}`\n"
                     f"🎯 Успешность: `{pass_percent}%`"
                 )
 
