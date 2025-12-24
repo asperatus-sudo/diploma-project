@@ -1,7 +1,7 @@
 import pytest
 import requests
 import allure
-from requests.exceptions import RequestException, Timeout, SSLError
+from requests.exceptions import RequestException, Timeout
 
 @allure.epic('EPIC 1: Функциональное тестирование TryHackMe')
 @allure.feature('Feature 1.3: Навигация и пользовательский интерфейс')
@@ -88,7 +88,7 @@ def test_links_api_get(expected_status_code, link_url, label):
             f'Конечный статус код не равен {expected_status_code} для URL {link_url}. ' \
             f'Получен {response.status_code}. Конечный URL: {response.url}'
 
-    if "tryhackme.com" in link_url and "/api/v2/" not in link_url:
+    if "tryhackme.com" in link_url:
         with allure.step('Проверка, что внутренняя ссылка не ведет на страницу ошибки'):
             assert "/not-found" not in response.url, \
                 f"Внутренняя ссылка {link_url} перенаправила на страницу ошибки {response.url}"

@@ -7,7 +7,7 @@ from alex_talako.pom_site.locators.login_locators.login_page import LoginPage
 
 load_dotenv()
 
-BASE_URL = os.getenv('BASE_URL','https://tryhackme.com')
+BASE_URL = os.getenv('BASE_URL')
 LOGIN = os.getenv("TEST_LOGIN")
 PASSWORD = os.getenv("TEST_PASSWORD")
 USER = os.getenv("TEST_USERNAME")

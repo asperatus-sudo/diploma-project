@@ -8,7 +8,7 @@ from requests.exceptions import Timeout, RequestException
 
 load_dotenv()
 
-BASE_URL = os.getenv('BASE_URL','https://tryhackme.com')
+BASE_URL = os.getenv('BASE_URL')
 
 SECURITY_HEADERS_TO_CHECK = [
     ('Content-Security-Policy', False), # Защита от XSS и внедрения кода

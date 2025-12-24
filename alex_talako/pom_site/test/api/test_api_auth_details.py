@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-BASE_URL = os.getenv('BASE_URL','https://tryhackme.com')
+BASE_URL = os.getenv('BASE_URL')
 COOKIES_FROM_ENV = os.getenv("AUTH_COOKIE","").strip()
 
 # Не забывать про куки
