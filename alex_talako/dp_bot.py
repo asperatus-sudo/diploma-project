@@ -7,7 +7,7 @@ import time
 import asyncio
 import os
 import json
-
+import glob
 
 
 load_dotenv()
@@ -273,11 +273,8 @@ async def all_tests(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # 5. Отправляем скриншоты ошибок (если есть)
     await send_error_screenshots(update, context)
 
-    # 6. Сводка (твоя логика)
-    short_result = "\n".join([line for line in result.split("\n") if "FAILED" in line or "ERROR" in line])
-    await update.message.reply_text(
-        f"📊 Результаты всех тестов:\n{short_result[:3000]}" if short_result else "✅ Все тесты прошли успешно!"
-    )
+    # 6. Сводка
+    await send_brief_report(update, context, str(results_dir))
 
 
 async def generate_allure_report(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -353,6 +350,49 @@ async def full_cycle(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Полный цикл: тесты + отчет"""
     await all_tests(update, context)
     await generate_allure_report(update, context)
+
+async def send_brief_report(update, context, results_path="allure-results"):
+    api_stats = {'passed': 0, 'failed': 0, 'xfail': 0}
+    ui_stats = {'passed': 0, 'failed': 0, 'xfail': 0}
+
+    result_files = glob.glob(f"{results_path}/*-result.json")
+
+    for file_path in result_files:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            status = data.get('status')
+            status_details = str(data.get('statusDetails', ''))
+            # Ищем в fullName путь к тесту, чтобы понять API это или UI
+            full_name = data.get('fullName', '').lower()
+
+            # Определяем категорию
+            if 'api' in full_name:
+                category = api_stats
+            else:
+                category = ui_stats
+
+            # Считаем статус
+            if status == 'passed':
+                category['passed'] += 1
+            elif status == 'skipped' or 'xfail' in status_details.lower():
+                category['xfail'] += 1
+            elif status == 'failed':
+                category['failed'] += 1
+
+    # Формируем красивый текст
+    report_text = (
+        f"📊 <b>ОТЧЕТ ПО УРОВНЯМ</b>\n\n"
+        f"🔹 <b>API:</b>\n"
+        f"  ✅ Пройдено: <code>{api_stats['passed']}</code>\n"
+        f"  ⚠️ Ожидаемые ошибки: <code>{api_stats['xfail']}</code>\n"
+        f"  ❌ Ошибки: <code>{api_stats['failed']}</code>\n\n"
+        f"🔸 <b>UI:</b>\n"
+        f"  ✅ Пройдено: <code>{ui_stats['passed']}</code>\n"
+        f"  ❌ Ошибки: <code>{ui_stats['failed']}</code>\n\n"
+        f"<b>Статус:</b> Завершено"
+    )
+
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=report_text, parse_mode='HTML')
 
 async def send_error_screenshots(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Находит и отправляет все скриншоты из папки screenshots"""
