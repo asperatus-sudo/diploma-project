@@ -8,37 +8,76 @@ import asyncio
 import os
 import json
 import glob
+import logging
+import sys
+
+ROOT_DIR = Path(__file__).parent.parent
+LOG_FILE_PATH = ROOT_DIR / "bot.log"
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - [%(levelname)s] - %(name)s - %(message)s',
+    handlers=[
+        logging.FileHandler("bot.log", encoding='utf-8'),
+        logging.StreamHandler(sys.stdout) # Чтобы видеть логи в консоли PyCharm
+    ]
+)
+logger = logging.getLogger("QA_NINJA_BOT")
+
+logger.info("=== СИСТЕМА МОНИТОРИНГА КАЧЕСТВА ЗАПУЩЕНА ===")
 
 
 load_dotenv()
 
 async def execute_command(cmd: str, update: Update, timeout: int = 300) -> str:
     """Выполняет shell-команду с таймаутом и возвращает результат"""
+    user = update.effective_user.username
+    logger.info(f"AUDIT - USER: @{user} - EXEC_CMD: {cmd}")
     try:
         proc = await asyncio.create_subprocess_shell(
             cmd,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE
         )
+
+        logger.info(f"PROCESS_STARTED - PID: {proc.pid}")
+
         stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout)
+
+        if proc.returncode == 0:
+            logger.info(f"PROCESS_SUCCESS - PID: {proc.pid}")
+        else:
+            logger.warning(f"PROCESS_FAILED - PID: {proc.pid} - EXIT_CODE: {proc.returncode}")
+
         output = f"STDOUT:\n{stdout.decode().strip()}" if stdout else ""
         output += f"\nSTDERR:\n{stderr.decode().strip()}" if stderr else ""
         return output.strip()
     except asyncio.TimeoutError:
+        logger.error(f"TIMEOUT_ERROR - CMD: {cmd} - LIMIT: {timeout}s")
         return f"❌ Таймаут ({timeout} сек)"
     except Exception as e:
+        logger.error(f"CRITICAL_EXCEPTION - CMD: {cmd} - MSG: {str(e)}", exc_info=True)
         return f"⚠️ Ошибка: {str(e)}"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text('Хей, я бот дипломного проекта для начинающего тестировщика!\n\nВот, что я могу тебе предложить:\n\n'
-                                    '1)  Напиши /about , чтобы узнать обо мне и создателе.\n\n'
-                                    '2)  Напиши /api , чтобы начать api тесты, которые помогают выявить ошибки и оценить общую работоспособность системы.\n\n'
-                                    '3)  Напиши /ui , чтобы начать ui тесты, которые проверяют пользовательский интерфейс ПО, оценивает его визуальные элементы, функциональность, удобство использования и т.д.\n\n'
-                                    '4)  Напиши /locust_test, чтобы начать нагрузочное тестирование.\n\n'
-                                    '5)  Напиши /all_test, чтобы начать запуск всех api и ui тестов.\n\n'
-                                    '6)  Напиши /allure_report, чтобы создать allure отчёт и сделать отправку архива.\n\n'
-                                    '7)  Напиши /full_report, чтобы запустить все тесты и сгенерировать по ним отчёт.\n\n'
-                                    )
+    user_name = update.effective_user.first_name
+    logger.info(f"USER_ACCESS - USER: @{update.effective_user.username} - ACTION: STARTED_BOT")
+    welcome_text = (
+        f"Привет, {user_name}! Я бот дипломного проекта. Давай проверим систему на прочность:\n\n"
+        
+        "📊 <b>ТЕСТЫ:</b>\n"
+        "🔹 <code>/api</code> — API тесты\n"
+        "🔹 <code>/ui</code> — UI тесты\n"
+        "🔹 <code>/locust_test</code> — Нагрузка\n"
+        "🔹 <code>/full_report</code> — Полный цикл\n\n"
+
+        "📦 <b>СЕРВИС:</b>\n"
+        "• <code>/allure_report</code> — Отчет\n"
+        "• <code>/clear</code> — Очистка\n"
+        "• <code>/about</code> — Инфо"
+    )
+    await update.message.reply_text(welcome_text, parse_mode='HTML')
 
 
 
@@ -65,6 +104,7 @@ async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def api(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Запуск тестов и сохранение результатов"""
+    logger.info(f"USER_ACTION - USER: @{update.effective_user.username} - CMD: /api")
     await update.message.reply_text("🔍 Запускаю тесты...")
 
     # 1. Находим корень и папку результатов в корне проекта
@@ -72,13 +112,19 @@ async def api(update: Update, context: ContextTypes.DEFAULT_TYPE):
     results_dir = root_dir / "allure-results"
     results_dir.mkdir(exist_ok=True)
 
+    logger.info(f"FILESYSTEM - ACTION: CLEANING_DIRECTORY - PATH: {results_dir}")
+    files_deleted = 0
     # 2. Очистка (чтобы в отчете по /api были ТОЛЬКО свежие API-результаты)
     for file in results_dir.glob("*"):
         try:
             if file.is_file():
                 file.unlink()
+                files_deleted += 1
         except Exception as e:
+            logger.error(f"FILESYSTEM_ERROR - FILE: {file} - MSG: {e}")
             print(f"Ошибка удаления файла {file}: {e}")
+
+    logger.info(f"FILESYSTEM - CLEANUP_COMPLETE - REMOVED: {files_deleted} files")
 
     # 3. Путь к самим тестам
     test_path = root_dir / "alex_talako" / "pom_site" / "test" / "api"
@@ -91,6 +137,10 @@ async def api(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # 5. Сводка
     short_result = "\n".join([line for line in result.split("\n") if "FAILED" in line or "ERROR" in line])
+    if short_result:
+        logger.warning(f"TEST_RESULTS - STATUS: FAILED - USER: @{update.effective_user.username}")
+    else:
+        logger.info(f"TEST_RESULTS - STATUS: SUCCESS - USER: @{update.effective_user.username}")
     await update.message.reply_text(
         f"📊 Результаты API тестов:\n{short_result[:3000]}" if short_result else "✅ API тесты прошли успешно!"
     )
@@ -98,6 +148,7 @@ async def api(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def ui(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Запуск UI-тестов с гарантированной чистотой отчета и скриншотами"""
+    logger.info(f"USER_ACTION - USER: @{update.effective_user.username} - CMD: /ui")
     await update.message.reply_text("🔍 Запускаю UI-тесты...")
 
     # 1. Находим корень проекта дважды двигаемся вверх
@@ -105,13 +156,19 @@ async def ui(update: Update, context: ContextTypes.DEFAULT_TYPE):
     results_dir = root_dir / "allure-results"  # Папка в КОРНЕ проекта
     results_dir.mkdir(exist_ok=True)
 
+    logger.info(f"FILESYSTEM - ACTION: CLEANING_DIRECTORY - PATH: {results_dir}")
+    files_deleted = 0
     # 2. Очистка (чтобы в отчете по /ui были ТОЛЬКО свежие UI-результаты)
     for file in results_dir.glob("*"):
         try:
             if file.is_file():
                 file.unlink()
+                files_deleted += 1
         except Exception as e:
+            logger.error(f"FILESYSTEM_ERROR - FILE: {file} - MSG: {e}")
             print(f"Ошибка удаления файла {file}: {e}")
+
+    logger.info(f"FILESYSTEM - CLEANUP_COMPLETE - REMOVED: {files_deleted} files")
 
     # 3. Путь к самим тестам (теперь правильно: через alex_talako)
     test_path = root_dir / "alex_talako" / "pom_site" / "test" / "ui"
@@ -124,10 +181,15 @@ async def ui(update: Update, context: ContextTypes.DEFAULT_TYPE):
     result = await execute_command(command, update)
 
     # 5. Отправляем скриншоты ошибок (если есть)
+    logger.info("ARTIFACTS - ACTION: SENDING_ERROR_SCREENSHOTS")
     await send_error_screenshots(update, context)
 
     # 6. Сводка (твоя логика)
     short_result = "\n".join([line for line in result.split("\n") if "FAILED" in line or "ERROR" in line])
+    if short_result:
+        logger.warning(f"TEST_RESULTS - STATUS: UI_FAILED - USER: @{update.effective_user.username}")
+    else:
+        logger.info(f"TEST_RESULTS - STATUS: UI_SUCCESS - USER: @{update.effective_user.username}")
     await update.message.reply_text(
         f"📊 Результаты UI тестов:\n{short_result[:3000]}" if short_result else "✅ UI тесты прошли успешно!"
     )
@@ -161,7 +223,7 @@ async def locust_test(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # 1. Параметры теста
     users, spawn_rate, run_time = 10, 1, "1m"
-
+    logger.info(f"USER_ACTION - USER: @{update.effective_user.username} - CMD: /locust_test - PARAMS: users={users}, rate={spawn_rate}, time={run_time}")
     await update.message.reply_text(
         f"🚀 **Запуск нагрузочного теста**\n"
         f"--------------------------------\n"
@@ -184,6 +246,7 @@ async def locust_test(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Проверка на существование файла
     if not locust_script.exists():
+        logger.error(f"FILESYSTEM_ERROR - LOCUST_SCRIPT_NOT_FOUND - PATH: {locust_script}")
         await update.message.reply_text(f"❌ Файл не найден! Проверь путь:\n`{locust_script}`", parse_mode='Markdown')
         return
 
@@ -195,6 +258,7 @@ async def locust_test(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # 4. Выполнение
     result = await execute_command(command, update, timeout=150)
+    logger.info("LOAD_TEST_EXECUTION_FINISHED")
 
     # Вывод в консоль PyCharm для контроля
     print(f"DEBUG: Locust Result:\n{result}")
@@ -246,6 +310,7 @@ async def locust_test(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def all_tests(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Запуск ВСЕХ тестов (API + UI) и сохранение результатов"""
+    logger.info(f"USER_ACTION - USER: @{update.effective_user.username} - CMD: /all_tests")
     await update.message.reply_text("🔍 Запускаю все тесты (API и UI)...")
 
     # 1. Находим корень проекта и папку результатов в корне проекта
@@ -253,14 +318,19 @@ async def all_tests(update: Update, context: ContextTypes.DEFAULT_TYPE):
     results_dir = root_dir / "allure-results"
     results_dir.mkdir(exist_ok=True)
 
+    logger.info(f"FILESYSTEM - ACTION: ROTATING_ALL_RESULTS - PATH: {results_dir}")
+    files_deleted = 0
     # 2. ОЧИСТКА (КРИТИЧНО для полного отчета, чтобы не было старых "хвостов")
     for file in results_dir.glob("*"):
         try:
             if file.is_file():
                 file.unlink()
+                files_deleted += 1
         except Exception as e:
+            logger.error(f"FILESYSTEM_ERROR - FILE: {file} - MSG: {e}")
             print(f"Ошибка удаления файла {file}: {e}")
 
+    logger.info(f"FILESYSTEM - CLEANUP_COMPLETE - REMOVED: {files_deleted} files")
     # 3. Путь ко всем тестам сразу (pytest сам найдет api и ui)
     test_suite_path = root_dir / "alex_talako" / "pom_site" / "test"
 
@@ -276,15 +346,19 @@ async def all_tests(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # 6. Сводка
     await send_brief_report(update, context, str(results_dir))
 
+    logger.info("ALL_TESTS_CYCLE_COMPLETE")
 
 async def generate_allure_report(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Генерация отчета, текстовая сводка для телефона и отправка архива"""
     try:
+        user = update.effective_user.username
+        logger.info(f"REPORT_GEN - ACTION: START_ALLURE_GEN - USER: @{user}")
         root_dir = Path(__file__).parent.parent
         results_dir = root_dir / "allure-results"
         report_dir = root_dir / "allure-report"
 
         if not results_dir.exists() or not any(results_dir.iterdir()):
+            logger.warning(f"REPORT_GEN - STATUS: NO_DATA - USER: @{user}")
             await update.message.reply_text("❌ Нет данных для отчета: папка allure-results пуста")
             return
 
@@ -317,16 +391,20 @@ async def generate_allure_report(update: Update, context: ContextTypes.DEFAULT_T
 
         # --- Создание архива (твой код с небольшим фиксом пути) ---
         await update.message.reply_text("📦 Создаю архив...")
+        logger.info("REPORT_GEN - ACTION: CREATING_ZIP_ARCHIVE")
         timestamp = int(time.time())
         zip_name = f"allure_report_{timestamp}.zip"
         abs_zip_path = root_dir / zip_name
 
         with zipfile.ZipFile(abs_zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            file_count = 0
             for root, _, files in os.walk(report_dir):
                 for file in files:
                     file_path = Path(root) / file
                     arcname = os.path.relpath(file_path, report_dir)
                     zipf.write(file_path, arcname=f"AllureReport/{arcname}")
+                    file_count += 1
+            logger.info(f"REPORT_GEN - ARCHIVE_READY - FILES_ZIPPED: {file_count}")
 
         # Отправка
         await update.message.reply_text("📤 Отправляю архив...")
@@ -341,17 +419,21 @@ async def generate_allure_report(update: Update, context: ContextTypes.DEFAULT_T
             )
 
         os.remove(abs_zip_path)
+        logger.info(f"REPORT_GEN - STATUS: SUCCESS - ARCHIVE_SENT_AND_DELETED")
         await update.message.reply_text("✅ Отчет готов!")
 
     except Exception as e:
+        logger.error(f"REPORT_GEN_ERROR - MSG: {str(e)}", exc_info=True)
         await update.message.reply_text(f"⚠️ Ошибка: {str(e)}")
 
 async def full_cycle(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Полный цикл: тесты + отчет"""
+    logger.info(f"USER_ACTION - USER: @{update.effective_user.username} - CMD: /full_report (TOTAL_SCAN)")
     await all_tests(update, context)
     await generate_allure_report(update, context)
 
 async def send_brief_report(update, context, results_path="allure-results"):
+    logger.info("REPORT_ANALYSIS - ACTION: PARSING_JSON_RESULTS")
     api_stats = {'passed': 0, 'failed': 0, 'xfail': 0}
     ui_stats = {'passed': 0, 'failed': 0, 'xfail': 0}
 
@@ -392,12 +474,15 @@ async def send_brief_report(update, context, results_path="allure-results"):
         f"<b>Статус:</b> Завершено"
     )
 
+    logger.info("REPORT_ANALYSIS - STATUS: BRIEF_SENT_TO_USER")
     await context.bot.send_message(chat_id=update.effective_chat.id, text=report_text, parse_mode='HTML')
 
 async def send_error_screenshots(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Находит и отправляет все скриншоты из папки screenshots"""
     screenshots_dir = Path(__file__).parent.parent / "screenshots"
     if screenshots_dir.exists():
+        logger.info(f"ARTIFACTS - ACTION: SCANNING_SCREENSHOTS - PATH: {screenshots_dir}")
+        photo_count = 0
         # Ищем все файлы .png в папке
         for photo_path in screenshots_dir.glob("*.png"):
             try:
@@ -409,28 +494,78 @@ async def send_error_screenshots(update: Update, context: ContextTypes.DEFAULT_T
                     )
                 # Удаляем файл после отправки, чтобы папка была чистой
                 photo_path.unlink()
+                photo_count += 1
             except Exception as e:
+                logger.error(f"ARTIFACT_ERROR - FILE: {photo_path.name} - MSG: {e}")
                 print(f"Ошибка при отправке скриншота: {e}")
 
-def main():
-    application = Application.builder().token(os.getenv("BOT_TOKEN")).build()
+        logger.info(f"ARTIFACTS - STATUS: COMPLETE - SENT_AND_CLEANED: {photo_count}")
 
-    handlers = [
-        CommandHandler("start", start),
-        CommandHandler("about", about),
-        CommandHandler("api", api),
-        CommandHandler("ui", ui),
-        CommandHandler("locust_test", locust_test),
-        CommandHandler("all_tests", all_tests),
-        CommandHandler("allure_report", generate_allure_report),
-        CommandHandler("full_report", full_cycle),
+
+async def clear(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Глобальная очистка временных данных и отчетов"""
+    user = update.effective_user.username
+    logger.warning(f"SYSTEM_CLEANUP_INITIATED - USER: @{user}")
+
+    await update.message.reply_text("🧹 Очищаю системные компоненты...")
+
+    root_dir = Path(__file__).parent.parent
+    folders = [
+        root_dir / "allure-results",
+        root_dir / "allure-report",
+        root_dir / "locust_results",
+        root_dir / "screenshots"
     ]
 
-    for handler in handlers:
-        application.add_handler(handler)
+    files_deleted = 0
+    for folder in folders:
+        if folder.exists():
+            for file in folder.glob("*"):
+                try:
+                    if file.is_file():
+                        file.unlink()
+                        files_deleted += 1
+                except Exception as e:
+                    logger.error(f"CLEANUP_ERROR - FILE: {file} - MSG: {e}")
 
-    print('Бот запущен')
-    application.run_polling()
+    logger.info(f"SYSTEM_CLEANUP_COMPLETE - FILES_REMOVED: {files_deleted}")
+
+    report_text = (
+        f"✨ <b>Система очистки завершена</b>\n"
+        f"───────────────────\n"
+        f"Удалено объектов: <code>{files_deleted}</code>\n"
+        f"Статус: <b>Готов для новых тестов</b>"
+    )
+    await update.message.reply_text(report_text, parse_mode='HTML')
+
+def main():
+    try:
+        application = Application.builder().token(os.getenv("BOT_TOKEN")).build()
+
+        handlers = [
+            CommandHandler("start", start),
+            CommandHandler("about", about),
+            CommandHandler("api", api),
+            CommandHandler("ui", ui),
+            CommandHandler("locust_test", locust_test),
+            CommandHandler("all_tests", all_tests),
+            CommandHandler("allure_report", generate_allure_report),
+            CommandHandler("full_report", full_cycle),
+            CommandHandler("clear", clear),
+        ]
+
+        for handler in handlers:
+            application.add_handler(handler)
+
+        logger.info("SYSTEM_READY - STATUS: POLLING_STARTED")
+        print('Бот запущен')
+        application.run_polling()
+
+    except Exception as e:
+        logger.critical(f"SYSTEM_CRASH - MSG: {str(e)}", exc_info=True)
+
+    finally:
+        logger.info("SYSTEM_SHUTDOWN - STATUS: OFFLINE")
 
 
 if __name__ == "__main__":
