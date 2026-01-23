@@ -5,7 +5,10 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
+
 
 load_dotenv()
 
@@ -36,7 +39,8 @@ def chrome_options():
 @pytest.fixture
 def web_browser(request, chrome_options):
     # Используем переданные опции
-    browser = webdriver.Chrome(options=chrome_options)
+    service = Service(ChromeDriverManager().install())
+    browser = webdriver.Chrome(service=service, options=chrome_options)
     if not os.getenv('GITHUB_ACTIONS'):
         browser.maximize_window()
 
