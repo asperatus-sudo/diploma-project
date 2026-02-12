@@ -12,7 +12,7 @@ class LoginPage(WebPage):
 
         super().__init__(web_driver, url)
 
-    btn_cookie = WebElement(xpath='//button[text()="Got it!"]')
+    btn_cookie = WebElement(xpath='//*[@data-sentry-element="StyledAcceptAllButton"]')
     btn_header_log_in = WebElement(xpath='(//*[@data-link="outlined"])[2]')
     btn_username_or_email = WebElement(xpath='//input[@name="usernameOrEmail"]')
     btn_password = WebElement(xpath='//input[@name="password"]')

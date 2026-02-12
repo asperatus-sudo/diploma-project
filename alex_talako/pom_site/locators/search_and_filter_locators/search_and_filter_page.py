@@ -13,7 +13,7 @@ class SearchPage(WebPage):
 
         super().__init__(web_driver, url)
 
-    btn_cookie = WebElement(xpath='//button[text()="Got it!"]')
+    btn_cookie = WebElement(xpath='//*[@data-sentry-element="StyledAcceptAllButton"]')
     btn_search = WebElement(xpath='//button[@data-testid="search-btn"]')
     btn_search_input = WebElement(xpath='//*[@data-testid="search-input"]')
     btn_point_of_view = WebElement(xpath='//*[@data-testid="select-type"]')

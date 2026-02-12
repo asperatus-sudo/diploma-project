@@ -13,7 +13,7 @@ class MainPage(WebPage):
 
         super().__init__(web_driver, url)
 
-    btn_cookie = WebElement(xpath="//button[text()='Got it!']")
+    btn_cookie = WebElement(xpath='//*[@data-sentry-element="StyledAcceptAllButton"]')
     btn_hands_on_labs = WebElement(xpath= '//*[@data-testid="top-footer"]//a[@href="/hacktivities"]')
     btn_for_business = WebElement(xpath ='//*[@data-testid="top-footer"]//a[@href="/business"]')
     btn_for_education = WebElement(xpath ='//*[@data-testid="top-footer"]//a[@href="/classrooms"]')

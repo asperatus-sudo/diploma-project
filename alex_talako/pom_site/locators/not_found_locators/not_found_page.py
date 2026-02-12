@@ -13,7 +13,7 @@ class NotFoundPage(WebPage):
 
         super().__init__(web_driver, url)
 
-    btn_cookie = WebElement(xpath='//button[text()="Got it!"]')
+    btn_cookie = WebElement(xpath='//*[@data-sentry-element="StyledAcceptAllButton"]')
     error_title = WebElement(xpath="//*[@data-sentry-element='ErrorTitle']")
     error_description = WebElement(xpath="//*[@data-sentry-element='ErrorDescription']")
     btn_back_to_dashboard = WebElement(xpath="//*[@data-sentry-element='CtaWrapper']")
