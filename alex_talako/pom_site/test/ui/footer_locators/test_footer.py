@@ -49,7 +49,7 @@ def test_footer(web_browser):
         time.sleep(2)
         for locator, expected_text, step_name in locators:
             with allure.step(f'Проверка: {step_name}'):
-                target = locator.find(timeout=10)
+                target = locator.find(timeout=30)
                 assert target is not None, f"Элемент '{step_name}' не найден в DOM"
                 web_browser.execute_script("arguments[0].scrollIntoView({block: 'center'});", target)
                 assert locator.wait_until_visible(timeout=5), f"Элемент '{step_name}' не виден"

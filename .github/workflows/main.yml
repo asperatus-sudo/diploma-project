@@ -23,10 +23,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Setup Chrome
+      - name: Prepare System (Chrome & Xvfb)
         run: |
           sudo apt-get update
-          sudo apt-get install -y google-chrome-stable
+          sudo apt-get install -y google-chrome-stable xvfb libosmesa6
 
       - name: Run Pytest
         env:
@@ -39,9 +39,7 @@ jobs:
           INVALID_TEST_PASSWORD: ${{ secrets.INVALID_TEST_PASSWORD }}
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          pytest alex_talako/pom_site/test/ \
-          --alluredir=allure-results \
-          -k "not instagram" | tee pytest_result.txt
+          xvfb-run --auto-servernum pytest alex_talako/pom_site/test/ --alluredir=allure-results -k "not instagram" | tee pytest_result.txt
           SUMMARY=$(grep -E 'passed|failed|error' pytest_result.txt | tail -n 1 | tr -d '=')
           echo "PYTEST_SUMMARY=$SUMMARY" >> $GITHUB_ENV
         continue-on-error: true
