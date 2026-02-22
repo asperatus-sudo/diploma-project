@@ -15,7 +15,7 @@ class SearchPage(WebPage):
 
     btn_cookie = WebElement(xpath='//*[@data-sentry-element="StyledAcceptAllButton"]')
     btn_search = WebElement(xpath='//button[@data-testid="search-btn"]')
-    btn_search_input = WebElement(xpath='//*[@data-testid="search-input"]')
+    btn_search_input = WebElement(xpath='//*[@data-sentry-element="FormInput"]')
     btn_point_of_view = WebElement(xpath='//*[@data-testid="select-type"]')
     btn_view_all = WebElement(xpath='(//*[@aria-disabled="false"])[1]')
     btn_view_purple = WebElement(xpath='(//*[@aria-disabled="false"])[2]')
@@ -42,4 +42,4 @@ class SearchPage(WebPage):
     btn_sub_subscription_only = WebElement(xpath='(//*[@aria-disabled="false"])[2]')
     btn_sub_free_only = WebElement(xpath='(//*[@aria-disabled="false"])[3]')
     btn_sub_cloud_add_on = WebElement(xpath='(//*[@aria-disabled="false"])[4]')
-    btn_kali_machine_room = WebElement(xpath='//*[@href="/room/kali"]//h2')
+    btn_kali_machine_room = WebElement(xpath='//a[@href="/room/kali"]')

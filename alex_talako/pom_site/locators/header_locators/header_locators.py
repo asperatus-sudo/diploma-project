@@ -18,7 +18,7 @@ class MainPage(WebPage):
     btn_header_practice = WebElement(xpath = '//*[@aria-label="Toggle dropdown for Practice"]')
     btn_header_compete = WebElement(xpath = '//*[@aria-label="Toggle dropdown for Compete"]')
     btn_header_education = WebElement(xpath = '//*[@aria-label="Navigate to Education page"]')
-    btn_header_business = WebElement(xpath = '//*[@aria-label="Navigate to Business page"]')
+    btn_header_business = WebElement(xpath = '//*[@aria-label="Toggle dropdown for Business"]')
     btn_header_pricing = WebElement(xpath = '//*[@aria-label="Navigate to Pricing page"]')
     btn_header_search = WebElement(xpath = '//button[@data-testid="search-btn"]')
     btn_header_log_in = WebElement(xpath = '(//*[@data-link="outlined"])[2]')

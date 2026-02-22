@@ -40,8 +40,8 @@ def test_auth_details():
     with allure.step('Проверка наличия данных в теле ответа'):
         assert response.text, "Тело ответа не должно быть пустым"
         data = response.json()
-        user_data = data.get('data').get('user')
-        local_data = data.get('data').get('user').get('local')
+        user_data = data.get('data', {}).get('user', {})
+        local_data = data.get('data', {}).get('user', {}).get('local', {})
 
         test_username = os.getenv('TEST_USERNAME')
         test_email = os.getenv('TEST_LOGIN')

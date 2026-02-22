@@ -28,4 +28,4 @@ def test_main_website_availability():
             f'Ожидался статус 200 OK, но получен {response.status_code}'
 
     with allure.step("Проверка наличия ключевого слова 'TryHackMe' в теле ответа"):
-        assert "TryHackMe" in response.text, "Ключевое слово 'TryHackMe' не найдено. Сайт не загрузился корректно."
+        assert "<title>TryHackMe" in response.text or "TryHackMe" in response.text, "Ключевое слово 'TryHackMe' не найдено. Сайт не загрузился корректно."

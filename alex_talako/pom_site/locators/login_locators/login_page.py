@@ -16,7 +16,7 @@ class LoginPage(WebPage):
     btn_header_log_in = WebElement(xpath='(//*[@data-link="outlined"])[2]')
     btn_username_or_email = WebElement(xpath='//input[@name="usernameOrEmail"]')
     btn_password = WebElement(xpath='//input[@name="password"]')
-    btn_captcha = WebElement(xpath='//*[@class="recaptcha-checkbox-border"]')
+    btn_captcha = WebElement(xpath='//div[@id="recaptcha" or contains(@class, "g-recaptcha")]')
     btn_log_in_account = WebElement(xpath='//button[text()="Log in"]')
     btn_send_magic_link = WebElement(xpath='//*[@data-sentry-element="StyledRegisterLink" and @href="/login/magic"]')
     btn_sign_up = WebElement(xpath='//*[@data-sentry-element="StyledRegisterLink" and @href="/signup"]')

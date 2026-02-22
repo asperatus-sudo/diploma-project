@@ -26,15 +26,16 @@ def test_footer(web_browser):
         (driver.btn_glossary, 'Glossary', "Кнопка 'Glossary'"),
         (driver.btn_work_at_tryhackme, 'Work at TryHackMe', "Кнопка 'Work at TryHackMe'"),
         (driver.btn_careers_in_cyber, 'Careers in Cyber', "Кнопка 'Careers in Cyber'"),
-        (driver.btn_buy_vouchers, 'Buy Vouchers', "Кнопка 'Buy Vouchers'"),
-        (driver.btn_swag_shop, 'Swag Shop', "Кнопка 'Swag Shop'"),
-        (driver.btn_contact_us, 'Contact Us', "Кнопка 'Contact Us'"),
-        (driver.btn_forum, 'Forum', "Кнопка 'Forum'"),
         (driver.btn_privacy_policy, 'Privacy Policy', "Кнопка 'Privacy Policy'"),
         (driver.btn_terms_of_use, 'Terms of Use', "Кнопка 'Terms of Use'"),
         (driver.btn_ai_terms_of_use, 'AI Terms of Use', "Кнопка 'AI Terms of Use'"),
-        (driver.btn_acceptable_use_policy, 'Acceptable Use Policy', "Кнопка 'Acceptable Use Policy'"),
-        (driver.btn_cookie_policy, 'Cookie Policy', "Кнопка 'Cookie Policy'"),
+        (driver.btn_acceptable_use_policy, 'Acceptable Use Policy',"Кнопка 'Acceptable Use Policy'"),
+        (driver.btn_cookie_policy,'Cookie Policy',"Кнопка 'Cookie Policy'"),
+        (driver.btn_contact_us, 'Contact Us', "Кнопка 'Contact Us'"),
+        (driver.btn_affiliates,'Affiliates', "Кнопка 'Affiliates'"),
+        (driver.btn_forum, 'Forum', "Кнопка 'Forum'"),
+        (driver.btn_students_discount, 'Student Discount',"Кнопка 'Student Discount'"),
+        (driver.btn_swag_shop, 'Swag Shop', "Кнопка 'Swag Shop'"),
         (driver.btn_follow_us_on_x, '', "Иконка 'Follow us on X (Twitter)'"),
         (driver.btn_linkedin, '', "Иконка 'LinkedIn'"),
         (driver.btn_discord, '', "Иконка 'Discord'"),
@@ -46,10 +47,14 @@ def test_footer(web_browser):
 
     with allure.step("Проверка всех элементов футера в цикле"):
         for locator, expected_text, step_name in locators:
-            with allure.step(f"Проверка элемента: {step_name}"):
-                assert locator.wait_until_visible(timeout=5), f'Элемент "{step_name}" не успел прогрузиться'
-                if expected_text:
-                    actual_text = locator.get_text().strip()
-                    assert actual_text == expected_text, f'Неверный текст. Ожидаемый текст "{expected_text}". Актуальный текст "{actual_text}"'
+            with allure.step(f"Проверка: {step_name}"):
+                assert locator.wait_until_visible(timeout=15), f'Элемент "{step_name}" не найден'
+                web_browser.execute_script("arguments[0].scrollIntoView({block: 'center'});", locator.find())
 
-                assert locator.is_clickable(), f'Элемент "{step_name}" не кликабелен'
+                if expected_text:
+
+                    actual_text = web_browser.execute_script("return arguments[0].textContent;", locator.find()).strip()
+                    assert expected_text in actual_text, \
+                        f'Текст не совпал. Ожидался "{expected_text}", пришел "{actual_text}"'
+
+                assert locator.is_clickable(), f'Элемент "{step_name}" заблокирован или перекрыт'

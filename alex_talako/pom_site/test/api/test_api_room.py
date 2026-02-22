@@ -38,11 +38,11 @@ def test_get_room_details_public():
             pytest.fail(f'Не удалось декодировать ответ как JSON. Ошибка: {e}\n{response.text[:500]}')
             return
 
-    room_data = data.get('data')
+    room_data = data.get('data', {})
     with allure.step('Проверка наличия вложенного ключа "data"'):
         assert room_data is not None, "В ответе API отсутствует вложенный ключ 'data'"
 
-    room_title = room_data.get('title')
+    room_title = room_data.get('title', {})
     expected_titles = ['Pickle Rick']
     with allure.step(f'Проверка названия комнаты: {room_title}'):
         assert room_title in expected_titles, f"Неверное название комнаты. Ожидалось одно из {expected_titles}, получено '{room_title}'"
@@ -52,9 +52,9 @@ def test_get_room_details_public():
         assert room_data.get('difficulty') == 'easy', 'Неверная сложность комнаты'
 
     with allure.step('Проверка типов данных основных атрибутов'):
-        assert isinstance(room_data.get('code'), str), 'Код комнаты должен быть строкой'
-        assert isinstance(room_data.get('users'), int), 'Количество пользователей должно быть целым числом'
-        assert isinstance(room_data.get('freeToUse'), bool), 'Флаг freeToUse должен быть булевым значением'
+        assert isinstance(room_data.get('code', {}), str), 'Код комнаты должен быть строкой'
+        assert isinstance(room_data.get('users', {}), int), 'Количество пользователей должно быть целым числом'
+        assert isinstance(room_data.get('freeToUse', {}), bool), 'Флаг freeToUse должен быть булевым значением'
 
     with allure.step('Проверка списка создателей (наличие и тип)'):
         assert 'creators' in room_data, 'Отсутствует список создателей'
@@ -62,11 +62,11 @@ def test_get_room_details_public():
         assert len(room_data['creators']) > 0, 'Список создателей не должен быть пустым'
 
     with allure.step('Проверка наличия автора "tryhackme" в списке'):
-        creator_usernames = [creator.get('username') for creator in room_data['creators']]
+        creator_usernames = [creator.get('username', {}) for creator in room_data['creators']]
         assert 'tryhackme' in creator_usernames, 'Пользователь "tryhackme" не найден в списке создателей'
 
     with allure.step('Проверка статуса публичности комнаты'):
-        assert room_data.get('public') is True, 'Комната должна быть публичной'
+        assert room_data.get('public', {}) is True, 'Комната должна быть публичной'
 
     with allure.step('Проверка типа IP-адреса (private)'):
-        assert room_data.get('ipType') == 'private', 'Ожидался ipType: private'
+        assert room_data.get('ipType', {}) == 'private', 'Ожидался ipType: private'

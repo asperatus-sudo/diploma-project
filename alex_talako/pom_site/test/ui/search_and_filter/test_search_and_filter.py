@@ -9,47 +9,50 @@ def test_search_kali_flow(web_browser):
 
 
     driver = SearchPage(web_browser)
-    with allure.step("Принятие куки"):
+    with allure.step('Принятие куки'):
         driver.btn_cookie.click()
 
-    with allure.step("Выбор поиска на главной странице"):
-        driver.btn_search.click()
-
     with allure.step("Ввод поискового запроса 'kali'"):
-        driver.btn_search_input.send_keys("kali")
+        driver.btn_search.click()
+        driver.btn_search_input.send_keys('kali')
         driver.btn_search_input.send_keys(Keys.ENTER)
         driver.scroll_by_pixels(500)
-    with allure.step("Определение фильтров"):
-        with allure.step("Установка фильтра Point of view: All"):
-            driver.btn_point_of_view.click()
-            driver.btn_view_all.click()
 
-    with allure.step("Установка фильтра сортировки по популярности: Relevance"):
-        driver.btn_sort_by.click()
-        driver.btn_sort_relevance.click()
+    with allure.step('Определение и установка фильтров'):
+        filter_steps = [
+            (driver.btn_point_of_view, driver.btn_view_all, "POV: All"),
+            (driver.btn_sort_by, driver.btn_sort_relevance, "Sort: Relevance"),
+            (driver.btn_difficulty, driver.btn_difficulty_easy, "Diff: Easy"),
+            (driver.btn_room_type, driver.btn_room_walkthroughs, "Type: Walkthroughs"),
+            (driver.btn_sub_type, driver.btn_sub_all, "Sub: All")
+        ]
 
-    with allure.step("Установка фильтра сложности: Easy"):
-        driver.btn_difficulty.click()
-        driver.btn_difficulty_easy.click()
+        for opener, selector, name in filter_steps:
+            with allure.step(f"Установка фильтра {name}"):
+                assert opener.wait_until_visible, f'Фильтр {name} не виден'
+                assert opener.is_clickable(), f'Фильтр {name} не кликабелен'
+                opener.click()
 
-    with allure.step("Установка фильтра типа комнаты: Walkthroughs "):
-        driver.btn_room_type.click()
-        driver.btn_room_walkthroughs.click()
+                assert selector.wait_until_visible, f'Опция для {name} не появилась'
+                selector.click()
 
-    with allure.step("Установка фильтра типа подписки: All"):
-        driver.btn_sub_type.click()
-        driver.btn_sub_all.click()
+    with allure.step('Валидация результата: поиск комнаты Kali Machine'):
+        target_card = driver.btn_kali_machine_room.find(timeout=15)
+        web_browser.execute_script("arguments[0].scrollIntoView({block: 'center'});", target_card)
+        assert driver.btn_kali_machine_room.wait_until_visible(timeout=10), \
+            "Комната Kali Machine не появилась после фильтрации."
 
-    with allure.step("Валидация результата: поиск комнаты Kali Machine"):
-        assert driver.btn_kali_machine_room.is_visible(), "Комната Kali Machine отсутствует из-за некорректно установленных фильтров"
+    with allure.step('Проверка названия комнаты'):
+        actual_text = web_browser.execute_script("return arguments[0].textContent;", target_card).strip()
+        expected_text = 'Kali Machine'
+        assert expected_text in actual_text, f'Ожидался "{expected_text}", но в теге: "{actual_text}"'
 
-    with allure.step("Проверка кликабельности комнаты"):
-        assert driver.btn_kali_machine_room.is_clickable(), "Комната Kali Machine не кликабельна"
+    with allure.step('Проверка кликабельности комнаты'):
+        assert driver.btn_kali_machine_room.is_clickable(), 'Комната Kali Machine не кликабельна'
 
-    with allure.step("Проверка названия комнаты"):
-        actual_text = driver.btn_kali_machine_room.get_text().strip()
-        expected_text = "Kali Machine"
-        assert actual_text == expected_text, f'Текст {expected_text} не найден. Получен текст {actual_text}'
+        driver.btn_kali_machine_room.click()
+
+
 
 
 

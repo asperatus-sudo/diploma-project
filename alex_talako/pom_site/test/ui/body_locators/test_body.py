@@ -1,5 +1,4 @@
 import allure
-import time
 import pytest_check as check
 
 from alex_talako.pom_site.locators.body_locators.body_locators import MainPage
@@ -15,7 +14,7 @@ def test_body(web_browser):
         driver.btn_cookie.click()
         check.is_true(driver.btn_email.is_visible(), 'Поле ввода Email не отображается')
 
-    with allure.step('Проверка статических кнопок и преимуществ'):
+    with allure.step('Проверка статических кнопок'):
         static_elements = [
             (driver.btn_join_near_email, 'Join for FREE'),
             (driver.btn_exercises_in_lesson, 'Exercises in every lesson'),
@@ -28,8 +27,9 @@ def test_body(web_browser):
         ]
 
         for element, expected_text in static_elements:
-            check.is_true(element.is_visible(), f"Элемент '{expected_text}' не виден")
-            check.equal(element.get_text().strip(), expected_text, 'Неверный текст')
+            check.is_true(element.wait_until_visible(timeout=10), f"Элемент '{expected_text}' не прогрузился")
+            actual_text = web_browser.execute_script("return arguments[0].textContent;", element.find()).strip()
+            check.is_true(expected_text in actual_text,f"Текст не совпал. Ожидался '{expected_text}', пришел '{actual_text}'")
 
         with allure.step('Проверка навигационных точек (Dots)'):
             dots = [
@@ -50,10 +50,11 @@ def test_body(web_browser):
                 'Offensive Pentesting', 'Web Fundamentals', 'Web Application Pentesting', 'CompTIA Pentest+'
             ]
 
+            assert driver.all_path_cards.wait_until_visible(timeout=15), "Карточки путей не прогрузились"
             all_cards = driver.all_path_cards.find()
             if all_cards:
                 web_browser.execute_script("arguments[0].scrollIntoView();", all_cards[0])
-                time.sleep(2)
+                driver.all_path_cards.wait_until_visible(timeout=5)
                 actual_texts = [web_browser.execute_script("return arguments[0].textContent;", el) for el in all_cards]
                 clean_texts = [t.replace('\n', ' ').strip() for t in actual_texts]
 

@@ -4,6 +4,7 @@ import allure
 import urllib.parse
 import os
 from dotenv import load_dotenv
+from urllib.parse import urljoin
 
 load_dotenv()
 
@@ -40,15 +41,12 @@ def test_api_combined_not_found(invalid_endpoint_path, expected_status_code):
 
     with allure.step('Гибкая проверка конечного URL с учетом декодирования'):
         final_url = response.url
-
-        # urllib.parse.unquote переведет %20 обратно в пробел, а %21 обратно в !
         final_url_decoded = urllib.parse.unquote(final_url)
 
         if "/api/" in invalid_endpoint_path:
-            expected_final_url = BASE_URL + "/not-found"
+            expected_final_url = urljoin(BASE_URL, "/not-found")
             assert final_url_decoded == expected_final_url, \
                 f"Ожидался редирект на {expected_final_url} для API, но получен {final_url_decoded}"
         else:
-            # исходный full_url для сравнения с декодированным фактическим URL
             assert final_url_decoded == full_url, \
                 f"Ожидалось остаться на {full_url}, но произошел неожиданный редирект на {final_url_decoded}"

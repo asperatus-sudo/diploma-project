@@ -41,9 +41,7 @@ jobs:
         run: |
           pytest alex_talako/pom_site/test/ \
           --alluredir=allure-results \
-          -k "not test_login_successfully and not instagram" > pytest_result.txt || true
-          SUMMARY=$(grep -E 'passed|failed|error' pytest_result.txt | tail -n 1 | tr -d '=')
-          echo "PYTEST_SUMMARY=$SUMMARY" >> $GITHUB_ENV
+          -k "not test_login_successfully and not instagram"
         continue-on-error: true
 
       - name: Save Allure Results

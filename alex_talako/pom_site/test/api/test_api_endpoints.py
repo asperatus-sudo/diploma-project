@@ -3,6 +3,7 @@ import requests
 import allure
 import os
 from dotenv import load_dotenv
+from urllib.parse import urljoin
 
 load_dotenv()
 
@@ -16,7 +17,7 @@ BASE_URL = os.getenv('BASE_URL')
     ("/pricing", 200, "/pricing"),
     ("/login", 200, "/login"),
     ("/hacktivities", 200, "/hacktivities"),
-    ("/dashboard", 200, "/dashboard"),
+    ("/classrooms", 200, "/classrooms"),
 ])
 def test_public_endpoints_status(endpoint_path, expected_status_code,expected_final_path):
     full_url = f"{BASE_URL}{endpoint_path}"
@@ -27,7 +28,6 @@ def test_public_endpoints_status(endpoint_path, expected_status_code,expected_fi
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
         }
 
-        # Мы изолируем каждый тест
         session = requests.Session()
 
     with allure.step(f'Вызов метода: {full_url}'):
@@ -39,7 +39,7 @@ def test_public_endpoints_status(endpoint_path, expected_status_code,expected_fi
 
     with allure.step('Проверка, что конечный URL соответствует ожидаемому пути'):
         final_url = response.url
-        expected_full_url = BASE_URL + expected_final_path
+        expected_full_url = urljoin(BASE_URL, expected_final_path)
         assert final_url == expected_full_url, \
             f"Ожидалась страница {expected_full_url}, но в итоге перенаправлены на {final_url}"
 
