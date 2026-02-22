@@ -27,7 +27,8 @@ def test_body(web_browser):
         ]
 
         for element, expected_text in static_elements:
-            check.is_true(element.wait_until_visible(timeout=10), f"Элемент '{expected_text}' не прогрузился")
+            assert element.wait_until_visible(timeout=10), f"Элемент '{expected_text}' не найден"
+            web_browser.execute_script("arguments[0].scrollIntoView({block: 'center'});", element.find())
             actual_text = web_browser.execute_script("return arguments[0].textContent;", element.find()).strip()
             check.is_true(expected_text in actual_text,f"Текст не совпал. Ожидался '{expected_text}', пришел '{actual_text}'")
 
