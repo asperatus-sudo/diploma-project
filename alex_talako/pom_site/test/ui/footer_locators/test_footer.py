@@ -48,11 +48,11 @@ def test_footer(web_browser):
     with allure.step("Проверка всех элементов футера в цикле"):
         for locator, expected_text, step_name in locators:
             with allure.step(f"Проверка: {step_name}"):
-                assert locator.wait_until_visible(timeout=15), f'Элемент "{step_name}" не найден'
                 web_browser.execute_script("arguments[0].scrollIntoView({block: 'center'});", locator.find())
+                assert locator.wait_until_visible(timeout=5), f'Элемент "{step_name}" не найден'
+
 
                 if expected_text:
-
                     actual_text = web_browser.execute_script("return arguments[0].textContent;", locator.find()).strip()
                     assert expected_text in actual_text, \
                         f'Текст не совпал. Ожидался "{expected_text}", пришел "{actual_text}"'
