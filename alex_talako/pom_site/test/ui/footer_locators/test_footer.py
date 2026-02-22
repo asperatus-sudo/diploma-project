@@ -47,6 +47,7 @@ def test_footer(web_browser):
 
     with allure.step('Проверка всех элементов футера в цикле"'):
         web_browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        assert driver.btn_students_discount.wait_until_visible(timeout=15), "Футер не прогрузился до конца"
         for locator, expected_text, step_name in locators:
             with allure.step(f'Проверка: {step_name}'):
                 target = locator.find(timeout=10)
