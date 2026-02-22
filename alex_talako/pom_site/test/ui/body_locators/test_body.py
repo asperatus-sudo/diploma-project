@@ -1,3 +1,4 @@
+import time
 import allure
 import pytest_check as check
 
@@ -13,6 +14,11 @@ def test_body(web_browser):
     with allure.step('Принятие куки и проверка поля Email'):
         driver.btn_cookie.click()
         check.is_true(driver.btn_email.is_visible(), 'Поле ввода Email не отображается')
+    with allure.step('Принудительная прогрузка страницы (Wake up React)'):
+        web_browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        time.sleep(2)
+        web_browser.execute_script("window.scrollTo(0, 0);")
+        time.sleep(1)
 
     with allure.step('Проверка статических кнопок'):
         static_elements = [

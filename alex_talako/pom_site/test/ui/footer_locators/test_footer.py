@@ -11,8 +11,11 @@ def test_footer(web_browser):
     driver = MainPage(web_browser)
     with allure.step("Принятие куки"):
         driver.btn_cookie.click()
-    with allure.step("Скролл к футеру для обеспечения видимости элементов"):
-        driver.btn_about_us.scroll_to_element()
+    with allure.step("Силовая прогрузка DOM (Wake up React)"):
+        web_browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        time.sleep(2)
+        web_browser.execute_script("window.scrollTo(0, 0);")
+        time.sleep(1)
 
 
     locators = [
