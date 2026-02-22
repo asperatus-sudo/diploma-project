@@ -11,11 +11,6 @@ def test_footer(web_browser):
     driver = MainPage(web_browser)
     with allure.step("Принятие куки"):
         driver.btn_cookie.click()
-    with allure.step("Силовая прогрузка DOM (Wake up React)"):
-        web_browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        time.sleep(2)
-        web_browser.execute_script("window.scrollTo(0, 0);")
-        time.sleep(1)
 
 
     locators = [
@@ -52,6 +47,8 @@ def test_footer(web_browser):
     with allure.step('Проверка всех элементов футера в цикле'):
         for locator, expected_text, step_name in locators:
             with allure.step(f'Проверка: {step_name}'):
+                web_browser.execute_script("arguments[0].scrollIntoView({block: 'center'});", locator.find(timeout=20))
+                time.sleep(1)
                 target = locator.find(timeout=10)
                 assert target is not None, f"Элемент '{step_name}' не найден в DOM"
                 web_browser.execute_script("arguments[0].scrollIntoView({block: 'center'});", target)

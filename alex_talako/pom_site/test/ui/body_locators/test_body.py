@@ -14,12 +14,6 @@ def test_body(web_browser):
     with allure.step('Принятие куки и проверка поля Email'):
         driver.btn_cookie.click()
         check.is_true(driver.btn_email.is_visible(), 'Поле ввода Email не отображается')
-    with allure.step('Принудительная прогрузка страницы (Wake up React)'):
-        web_browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        time.sleep(2)
-        web_browser.execute_script("window.scrollTo(0, 0);")
-        time.sleep(1)
-
     with allure.step('Проверка статических кнопок'):
         static_elements = [
             (driver.btn_join_near_email, 'Join for FREE'),
@@ -34,6 +28,8 @@ def test_body(web_browser):
 
         for element, expected_text in static_elements:
                 with allure.step(f"Проверка: {expected_text}"):
+                    web_browser.execute_script("arguments.scrollIntoView({block: 'center'});", element.find(timeout=20))
+                    time.sleep(1)
                     target = element.find(timeout=10)
                     assert target is not None, f"Элемент '{expected_text}' не найден в DOM"
                     web_browser.execute_script("arguments[0].scrollIntoView({block: 'center'});", target)
