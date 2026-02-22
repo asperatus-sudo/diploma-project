@@ -28,7 +28,7 @@ def test_body(web_browser):
 
         for element, expected_text in static_elements:
                 with allure.step(f"Проверка: {expected_text}"):
-                    web_browser.execute_script("arguments.scrollIntoView({block: 'center'});", element.find(timeout=20))
+                    web_browser.execute_script("arguments[0].scrollIntoView({block: 'center'});", element.find(timeout=20))
                     time.sleep(1)
                     target = element.find(timeout=10)
                     assert target is not None, f"Элемент '{expected_text}' не найден в DOM"

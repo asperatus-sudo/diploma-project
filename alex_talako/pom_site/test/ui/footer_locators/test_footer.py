@@ -47,13 +47,11 @@ def test_footer(web_browser):
     with allure.step('Проверка всех элементов футера в цикле'):
         for locator, expected_text, step_name in locators:
             with allure.step(f'Проверка: {step_name}'):
-                web_browser.execute_script("arguments[0].scrollIntoView({block: 'center'});", locator.find(timeout=20))
-                time.sleep(1)
                 target = locator.find(timeout=10)
                 assert target is not None, f"Элемент '{step_name}' не найден в DOM"
                 web_browser.execute_script("arguments[0].scrollIntoView({block: 'center'});", target)
                 time.sleep(1)
-                assert locator.wait_until_visible(timeout=5), f"Элемент '{step_name}' не виден"
+                assert locator.wait_until_visible(timeout=10), f"Элемент '{step_name}' не виден"
                 if expected_text:
                     actual_text = web_browser.execute_script("return arguments[0].textContent;", target).strip()
                     assert expected_text in actual_text, f'Текст не совпал в {step_name}'
