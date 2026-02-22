@@ -1,3 +1,4 @@
+import time
 import allure
 from alex_talako.pom_site.locators.footer_locators.footer_locators import MainPage
 
@@ -45,14 +46,13 @@ def test_footer(web_browser):
         (driver.btn_follow_us_on_pinterest, '', "Иконка 'Pinterest'"),
     ]
 
-    with allure.step('Проверка всех элементов футера в цикле"'):
-        web_browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        assert driver.btn_students_discount.wait_until_visible(timeout=15), "Футер не прогрузился до конца"
+    with allure.step('Проверка всех элементов футера в цикле'):
         for locator, expected_text, step_name in locators:
             with allure.step(f'Проверка: {step_name}'):
                 target = locator.find(timeout=10)
                 assert target is not None, f"Элемент '{step_name}' не найден в DOM"
                 web_browser.execute_script("arguments[0].scrollIntoView({block: 'center'});", target)
+                time.sleep(1)
                 assert locator.wait_until_visible(timeout=5), f"Элемент '{step_name}' не виден"
                 if expected_text:
                     actual_text = web_browser.execute_script("return arguments[0].textContent;", target).strip()
