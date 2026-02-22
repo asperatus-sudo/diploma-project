@@ -41,7 +41,7 @@ jobs:
         run: |
           pytest alex_talako/pom_site/test/ \
           --alluredir=allure-results \
-          -k "not instagram"| tee pytest_result.txt
+          -k "not instagram" | tee pytest_result.txt
           SUMMARY=$(grep -E 'passed|failed|error' pytest_result.txt | tail -n 1 | tr -d '=')
           echo "PYTEST_SUMMARY=$SUMMARY" >> $GITHUB_ENV
         continue-on-error: true

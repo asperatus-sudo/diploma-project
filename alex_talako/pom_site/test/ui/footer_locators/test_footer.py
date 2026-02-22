@@ -45,15 +45,16 @@ def test_footer(web_browser):
         (driver.btn_follow_us_on_pinterest, '', "Иконка 'Pinterest'"),
     ]
 
-    with allure.step("Проверка всех элементов футера в цикле"):
+    with allure.step('Проверка всех элементов футера в цикле"'):
         for locator, expected_text, step_name in locators:
-            with allure.step(f"Проверка: {step_name}"):
-                assert locator.wait_until_visible(timeout=5), f'Элемент "{step_name}" не найден'
-                web_browser.execute_script("arguments[0].scrollIntoView({block: 'center'});", locator.find())
+            with allure.step(f'Проверка: {step_name}'):
+                target = locator.find(timeout=10)
+                assert target is not None, f"Элемент '{step_name}' не найден в DOM"
+                assert locator.wait_until_visible(timeout=5), f"Элемент '{step_name}' не виден"
+                web_browser.execute_script("arguments[0].scrollIntoView({block: 'center'});", target)
 
                 if expected_text:
-                    actual_text = web_browser.execute_script("return arguments[0].textContent;", locator.find()).strip()
-                    assert expected_text in actual_text, \
-                        f'Текст не совпал. Ожидался "{expected_text}", пришел "{actual_text}"'
+                    actual_text = web_browser.execute_script("return arguments[0].textContent;", target).strip()
+                    assert expected_text in actual_text, f'Текст не совпал в {step_name}'
 
-                assert locator.is_clickable(), f'Элемент "{step_name}" заблокирован или перекрыт'
+                assert locator.is_clickable(), f'Элемент "{step_name}" заблокирован'

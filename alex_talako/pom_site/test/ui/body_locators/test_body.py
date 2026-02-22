@@ -27,10 +27,13 @@ def test_body(web_browser):
         ]
 
         for element, expected_text in static_elements:
-            assert element.wait_until_visible(timeout=10), f"Элемент '{expected_text}' не найден"
-            web_browser.execute_script("arguments[0].scrollIntoView({block: 'center'});", element.find())
-            actual_text = web_browser.execute_script("return arguments[0].textContent;", element.find()).strip()
-            check.is_true(expected_text in actual_text,f"Текст не совпал. Ожидался '{expected_text}', пришел '{actual_text}'")
+                with allure.step(f"Проверка: {expected_text}"):
+                    target = element.find(timeout=10)
+                    assert target is not None, f"Элемент '{expected_text}' не найден в DOM"
+                    assert element.wait_until_visible(timeout=5), f"Элемент '{expected_text}' не виден"
+                    web_browser.execute_script("arguments[0].scrollIntoView({block: 'center'});", target)
+                    actual_text = web_browser.execute_script("return arguments[0].textContent;", target).strip()
+                    check.is_true(expected_text in actual_text, f"Текст не совпал: {actual_text}")
 
         with allure.step('Проверка навигационных точек (Dots)'):
             dots = [
