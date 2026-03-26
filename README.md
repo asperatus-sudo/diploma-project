@@ -20,3 +20,7 @@ Reporting: Allure Report + Telegram API Integration.
 4.Async Orchestration (SENTINEL): Асинхронный бот-менеджер для мониторинга запусков и мгновенной доставки логов/отчетов.
 
 5.Handling Dynamic Content: Реализованы алгоритмы адаптивных ожиданий и JS-скроллов для тестирования Lazy Loading элементов.
+
+Сертификация:
+
+Оригинал официального сертификата о подготовке (Компьютерная Академия IT STEP) доступен в папке: [📂 Посмотреть сертификат](./certificates/qa_certificate.png)
