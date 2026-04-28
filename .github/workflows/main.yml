@@ -39,9 +39,15 @@ jobs:
           INVALID_TEST_PASSWORD: ${{ secrets.INVALID_TEST_PASSWORD }}
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          xvfb-run --auto-servernum pytest alex_talako/pom_site/test/ --alluredir=allure-results -k "not instagram" | tee pytest_result.txt
-          SUMMARY=$(grep -E 'passed|failed|error' pytest_result.txt | tail -n 1 | tr -d '=')
-          echo "PYTEST_SUMMARY=$SUMMARY" >> $GITHUB_ENV
+          pytest alex_talako/pom_site/test/api/ --alluredir=allure-results > api_res.txt || true
+          
+          xvfb-run --auto-servernum pytest alex_talako/pom_site/test/ui/ --alluredir=allure-results > ui_res.txt || true
+          
+          API_SUM=$(grep -E 'passed|failed|error' api_res.txt | tail -n 1 | sed 's/===//g' | xargs)
+          UI_SUM=$(grep -E 'passed|failed|error' ui_res.txt | tail -n 1 | sed 's/===//g' | xargs)
+          
+          echo "API_SUMMARY=${API_SUM:-No API tests found}" >> $GITHUB_ENV
+          echo "UI_SUMMARY=${UI_SUM:-No UI tests found}" >> $GITHUB_ENV
         continue-on-error: true
 
       - name: Save Allure Results
@@ -56,4 +62,5 @@ jobs:
         run: |
             curl -s -X POST https://api.telegram.org/bot${{ secrets.BOT_TOKEN }}/sendMessage \
               -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
-              -d text="🚀 CI Статус: Тесты в облаке завершены!%0A%0A📊 Итог: ${{ env.PYTEST_SUMMARY }}%0A%0A☁️ Результаты в Artifacts. /full_report"
+              -d text="*SENTINEL CI Status*%0A%0A*API Tests:* ${{ env.API_SUMMARY }}%0A*UI Tests:* ${{ env.UI_SUMMARY }}%0A%0A☁️ Results saved in Artifacts. /full_report" \
+              -d parse_mode="Markdown"
