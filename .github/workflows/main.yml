@@ -5,6 +5,9 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   run-tests:
     runs-on: ubuntu-latest
@@ -39,15 +42,14 @@ jobs:
           INVALID_TEST_PASSWORD: ${{ secrets.INVALID_TEST_PASSWORD }}
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          pytest alex_talako/pom_site/test/api/ --alluredir=allure-results > api_res.txt || true
+          pytest alex_talako/pom_site/test/api/ --alluredir=allure-results | tee api_res.txt || true
+          xvfb-run --auto-servernum pytest alex_talako/pom_site/test/ui/ --alluredir=allure-results | tee ui_res.txt || true
           
-          xvfb-run --auto-servernum pytest alex_talako/pom_site/test/ui/ --alluredir=allure-results > ui_res.txt || true
+          API_RES=$(grep -E 'passed|failed|error' api_res.txt | tail -n 1 | sed 's/[=]//g' | xargs)
+          UI_RES=$(grep -E 'passed|failed|error' ui_res.txt | tail -n 1 | sed 's/[=]//g' | xargs)
           
-          API_SUM=$(grep -E 'passed|failed|error' api_res.txt | tail -n 1 | sed 's/===//g' | xargs)
-          UI_SUM=$(grep -E 'passed|failed|error' ui_res.txt | tail -n 1 | sed 's/===//g' | xargs)
-          
-          echo "API_SUMMARY=${API_SUM:-No API tests found}" >> $GITHUB_ENV
-          echo "UI_SUMMARY=${UI_SUM:-No UI tests found}" >> $GITHUB_ENV
+          echo "API_STOUT=${API_RES:-No API results}" >> $GITHUB_ENV
+          echo "UI_STOUT=${UI_RES:-No UI results}" >> $GITHUB_ENV
         continue-on-error: true
 
       - name: Save Allure Results
@@ -62,5 +64,5 @@ jobs:
         run: |
             curl -s -X POST https://api.telegram.org/bot${{ secrets.BOT_TOKEN }}/sendMessage \
               -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
-              -d text="*SENTINEL CI Status*%0A%0A*API Tests:* ${{ env.API_SUMMARY }}%0A*UI Tests:* ${{ env.UI_SUMMARY }}%0A%0A☁️ Results saved in Artifacts. /full_report" \
+              -d text="*SENTINEL CI Status*%0A%0A*API Tests:* ${{ env.API_STOUT }}%0A*UI Tests:* ${{ env.UI_STOUT }}%0A%0A Results saved in Artifacts. /full_report%0A%0A [View Run Details](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" \
               -d parse_mode="Markdown"
