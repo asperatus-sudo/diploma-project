@@ -64,5 +64,5 @@ jobs:
         run: |
             curl -s -X POST https://api.telegram.org/bot${{ secrets.BOT_TOKEN }}/sendMessage \
               -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
-              -d text="<b>SENTINEL CI Status</b>%0A%0A<b>API Tests:</b> ${{ env.API_STOUT }}%0A<b>UI Tests:</b> ${{ env.UI_STOUT }}%0A%0A<a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View Run Details</a>" \
+              -d text="<b>SENTINEL CI Status</b>%0A%0A<b>API Tests:</b> ${{ env.API_STOUT }}%0A<b>UI Tests:</b> ${{ env.UI_STOUT }}%0A%0A<b>Artifacts:</b> <a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts'>Download Results</a>%0A<b>Details:</b> <a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View Run</a>" \
               -d parse_mode="HTML"
