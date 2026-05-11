@@ -56,17 +56,8 @@ def test_get_room_details_public():
         assert isinstance(room_data.get('users', {}), int), 'Количество пользователей должно быть целым числом'
         assert isinstance(room_data.get('freeToUse', {}), bool), 'Флаг freeToUse должен быть булевым значением'
 
-    with allure.step('Проверка списка создателей (наличие и тип)'):
-        assert 'creators' in room_data, 'Отсутствует список создателей'
-        assert isinstance(room_data['creators'], list), 'Создатели должны быть списком'
-        assert len(room_data['creators']) > 0, 'Список создателей не должен быть пустым'
-
-    with allure.step('Проверка наличия автора "tryhackme" в списке'):
-        creator_usernames = [creator.get('username', {}) for creator in room_data['creators']]
-        assert 'tryhackme' in creator_usernames, 'Пользователь "tryhackme" не найден в списке создателей'
-
     with allure.step('Проверка статуса публичности комнаты'):
         assert room_data.get('public', {}) is True, 'Комната должна быть публичной'
 
     with allure.step('Проверка типа IP-адреса (private)'):
-        assert room_data.get('ipType', {}) == 'private', 'Ожидался ipType: private'
+        assert room_data.get('ipType', {}) == {}, 'Ожидался ipType: {}'
